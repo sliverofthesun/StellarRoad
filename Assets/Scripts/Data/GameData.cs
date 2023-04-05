@@ -52,6 +52,18 @@ public class GameData : MonoBehaviour
     private int _numberOfPlanets;
     public int NumberOfPlanets { get => _numberOfPlanets; set => _numberOfPlanets = value; }
 
+    [SerializeField]
+    private float _daysPassed;
+    public float DaysPassed { get => _daysPassed; set => _daysPassed = value; }
+
+    [SerializeField]
+    private float _lightYearsPerUnit;
+    public float LightYearsPerUnit { get => _lightYearsPerUnit; set => _lightYearsPerUnit = value; }
+
+    [SerializeField]
+    private float _speedInLightYearsPerDay;
+    public float SpeedInLightYearsPerDay { get => _speedInLightYearsPerDay; set => _speedInLightYearsPerDay = value; }
+
     private void Awake()
     {
         if (Instance == null)

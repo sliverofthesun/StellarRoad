@@ -23,6 +23,7 @@ public class StarSystemManager : MonoBehaviour
     public float distanceSeed;
     public float distanceSeedStandardDiv;
     public float firstOrbit;
+    private float previousOrbit;
 
     public float ratioOfPlanetaryMassToStar; //used to generate how massive planets are
 
@@ -47,13 +48,25 @@ public class StarSystemManager : MonoBehaviour
     private void Start()
     {
         //Setting all the values into variables within this script
-        StarSystemController starSystemController = GameData.Instance.CurrentStarSystemController;
-        starSize = GameData.Instance.StarSize;
-        starLuminosity = GameData.Instance.StarLuminosity;
-        starMass = GameData.Instance.StarMass;
-        starSystemSeed = GameData.Instance.SystemSeed;
-        nOfPlanets = GameData.Instance.NumberOfPlanets;
-        starColor = GameData.Instance.StarColor;
+        if(GameData.Instance != null)
+        {
+            StarSystemController starSystemController = GameData.Instance.CurrentStarSystemController;
+            starSize = GameData.Instance.StarSize;
+            starLuminosity = GameData.Instance.StarLuminosity;
+            starMass = GameData.Instance.StarMass;
+            starSystemSeed = GameData.Instance.SystemSeed;
+            nOfPlanets = GameData.Instance.NumberOfPlanets;
+            starColor = GameData.Instance.StarColor;
+        }
+        else{
+            starSize = 1f;
+            starLuminosity = 1f;
+            starMass = 1f;
+            starSystemSeed = 125678;
+            nOfPlanets = 5;
+            starColor = Color.yellow;            
+        }
+
 
         Debug.Log("Now in star system " + starSystemSeed + " with " + nOfPlanets + " planets.");
 
@@ -75,7 +88,7 @@ public class StarSystemManager : MonoBehaviour
         GenerateBlaggFormulation();
 
         // Add the scaling factor calculation
-        float scalingFactor = firstOrbitRadiusInUnits / (firstOrbit * 5f);
+        float scalingFactor = firstOrbitRadiusInUnits / (firstOrbit * 10f);
         Debug.Log(scalingFactor);
         if (!float.IsInfinity(scalingFactor) && !float.IsNaN(scalingFactor) && scalingFactor != 0)
         {
@@ -88,7 +101,7 @@ public class StarSystemManager : MonoBehaviour
 
         // Draw the smooth outline around the star
         float outlineRadius = star.transform.localScale.x * 0.495f;
-        Color outlineColor = GameData.Instance.StarColor;
+        Color outlineColor = starColor;
         float outlineWidth = 0.025f * starSize / 2.5f; // Adjust this value for the desired outline thickness
         DrawStarOutline(star, outlineRadius, outlineColor, outlineWidth);
 
@@ -264,7 +277,7 @@ public class StarSystemManager : MonoBehaviour
 
         //Calculating the innermost orbit using trappist one and solar system as raff guideline
         firstOrbit = randomValueBasedONGauss(45f, 25f, 5f, 100000f);
-        firstOrbit = firstOrbit * starSize / 86.0129f;
+        firstOrbit = (firstOrbit * starSize) / 215f;
         Debug.Log("First orbit is: " + firstOrbit);
     }
 
@@ -281,10 +294,12 @@ public class StarSystemManager : MonoBehaviour
         if (i == 0)
         {
             distance = firstOrbit;
+            previousOrbit = distance;
         }
         else
         {
             distance = GetNextPlanetaryDistance(distanceSeed, i, firstOrbit);
+            previousOrbit = distance;
         }
 
             //PlanetComposition planetComposition = GenerateComposition(distance, massLine[i]);
@@ -329,7 +344,11 @@ public class StarSystemManager : MonoBehaviour
     public float GetNextPlanetaryDistance(float distanceSeed, int nthPlanet, float firstOrbit)
     {
         float mean = firstOrbit*Mathf.Pow(distanceSeed, nthPlanet);
-        return randomValueBasedONGauss(mean,distanceSeedStandardDiv,mean*0.1f, 100000f);
+        float distance = 0;
+        do{
+            distance = randomValueBasedONGauss(mean,distanceSeedStandardDiv,mean*0.1f, 100000f);
+        } while(distance < previousOrbit * 1.1f);
+        return distance;
     }
 
     private GameObject DrawOrbit(float radius)

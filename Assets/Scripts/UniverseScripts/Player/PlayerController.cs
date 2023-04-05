@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
 
     private GameObject targetStar;
     private bool moving;
+    private float timeTakenInDays;
 
     private string saveFilePath;
     private bool positionSetFromSave = false;
@@ -109,6 +110,11 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space) && targetStar != null && !moving)
         {
             moving = true;
+            float distance = Vector3.Distance(transform.position, targetStar.transform.position);
+
+            // Calculate time taken to travel the distance when initiating the travel
+            float actualDistanceInLightYears = distance * GameData.Instance.LightYearsPerUnit;
+            timeTakenInDays = actualDistanceInLightYears / GameData.Instance.SpeedInLightYearsPerDay;
         }
         
         if (moving)
@@ -220,6 +226,7 @@ public class PlayerController : MonoBehaviour
     {
         Time.timeScale = 1;
         float distance = Vector3.Distance(transform.position, targetStar.transform.position);
+
         if (distance < 0.01f)
         {
             moving = false;
@@ -232,6 +239,8 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("Reached star");
                 GameData.Instance.CurrentStarSystemController = starSystemController;
 
+                // Add the time taken to travel to DaysPassed
+                GameData.Instance.DaysPassed += timeTakenInDays;
             }
             else
             {

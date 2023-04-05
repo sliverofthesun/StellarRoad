@@ -21,6 +21,8 @@ public class SaveData
     public float starLuminosity;
     public int numberOfPlanets;
 
+    public float timeInDays;
+
     // Constructor to create a new SaveData instance with the given seed, camera position, and player position
     public SaveData(int playerScenePosition, Vector3 playerUniversePosition, int systemSeed, Vector3 cameraPosition)
     {
@@ -36,6 +38,7 @@ public class SaveData
         this.starLuminosity = GameData.Instance.StarLuminosity;
         this.numberOfPlanets = GameData.Instance.NumberOfPlanets;
 
+        this.timeInDays = GameData.Instance.DaysPassed;
 
         this.cameraPosition = cameraPosition;
     }

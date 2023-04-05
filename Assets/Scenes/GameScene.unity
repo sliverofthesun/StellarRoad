@@ -152,6 +152,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d300424745d4a14a9d8481c14f74d06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _currentStarSystemController: {fileID: 0}
+  _universePlayerPosition: {x: 0, y: 0, z: 0}
+  _cameraPosition: {x: 0, y: 0, z: 0}
+  _universeSeed: 0
+  _systemSeed: 0
+  _starColor: {r: 0, g: 0, b: 0, a: 0}
+  _playerScenePosition: 0
+  _starMass: 0
+  _starSize: 0
+  _starLuminosity: 0
+  _numberOfPlanets: 0
+  _daysPassed: 0
+  _lightYearsPerUnit: 1.75
+  _speedInLightYearsPerDay: 3.6
 --- !u!4 &24576778
 Transform:
   m_ObjectHideFlags: 0
@@ -200,7 +214,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 1197079993}
   lineRenderer: {fileID: 957903159}
-  moveSpeed: 5
+  moveSpeed: 2
   pulsatingCirclePrefab: {fileID: 1000451494808651217, guid: ea8c8080baf799c43bb3898704857d03, type: 3}
   worldGenerator: {fileID: 1001405637}
   maxTravelDistance: 10

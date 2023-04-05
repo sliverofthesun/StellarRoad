@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8241267975283723982}
   - component: {fileID: 5445733896486209046}
   - component: {fileID: 7637878264300662394}
+  - component: {fileID: -4631893891752559062}
   m_Layer: 0
   m_Name: PlanetPrefab
   m_TagString: Planet
@@ -204,7 +205,10 @@ MonoBehaviour:
     mass: 0
     radius: 0
     density: 0
+    surfaceGravity: 0
+    escapeVelocity: 0
     SMA_AU: 0
+    orbitalPeriod: 0
     temperature_K: 0
     hasAtmosphere: 0
     trueAnomaly: 0
@@ -225,10 +229,27 @@ MonoBehaviour:
   scalingOfMassMarkersLen: 0.2
   massMarkerMaterial: {fileID: 2100000, guid: 6450a018d602eba4f94a310cb9d0ce49, type: 2}
   coldColor: {r: 0, g: 0.78541684, b: 1, a: 0}
-  warmColor: {r: 0, g: 0.8, b: 0.04980089, a: 1}
+  goldilocksLowerColor: {r: 0, g: 1, b: 0.5964391, a: 0}
+  goldilocksUpperColor: {r: 0.52290285, g: 0.9528302, b: 0, a: 0}
   hotColor: {r: 1, g: 0.5954134, b: 0, a: 1}
-  veryHotColor: {r: 1, g: 0.000000091393794, b: 0, a: 1}
+  scorchingColor: {r: 1, g: 0.22676848, b: 0, a: 0}
   metalColor: {r: 0, g: 0, b: 0, a: 1}
   sillicaColor: {r: 0.3301887, g: 0.3301887, b: 0.3301887, a: 1}
   gasColor: {r: 1, g: 1, b: 1, a: 0}
   liquidColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
+--- !u!58 &-4631893891752559062
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5766726128347595272}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 5

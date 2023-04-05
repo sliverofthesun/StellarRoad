@@ -113,6 +113,7 @@ public class PauseMenuController : MonoBehaviour
             GameData.Instance.StarLuminosity = saveData.starLuminosity;
             GameData.Instance.NumberOfPlanets = saveData.numberOfPlanets;
             GameData.Instance.StarColor = saveData.starColor;
+            GameData.Instance.DaysPassed = saveData.timeInDays;
 
             Debug.Log("Game loaded from: " + saveFilePath);
 

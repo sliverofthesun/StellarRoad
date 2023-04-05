@@ -21,14 +21,20 @@ public class PlanetManager : MonoBehaviour
     public Material massMarkerMaterial;
     
     public Color coldColor;
-    public Color warmColor;
+    public Color goldilocksLowerColor;
+    public Color goldilocksUpperColor;
     public Color hotColor;
-    public Color veryHotColor;
+    public Color scorchingColor;
 
     public Color metalColor;
     public Color sillicaColor;
     public Color gasColor;
     public Color liquidColor;
+
+    void Awake()
+    {
+        cam = Camera.main;
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -38,6 +44,8 @@ public class PlanetManager : MonoBehaviour
         GenerateComposition();
         UpdatePlanetDensity();
         CalculateGravity();
+        CalculatePeriod();
+        UpdateTime();
         //GenerateAtmosphere();
         UpdateOrbitColor();
         DisplayPlanetComposition();
@@ -50,7 +58,31 @@ public class PlanetManager : MonoBehaviour
 
     void Update()
     {
-        //UpdatePlanetScale();
+        ScalePlanetCollider();
+    }
+
+    private void UpdateTime()
+    {
+        // Get the orbital period in days
+        float orbitalPeriodInDays = planetData.orbitalPeriod * 365.25f;
+
+        // Calculate the rotation angle based on GameData.DaysPassed and the orbital period
+        float rotationAngle = (GameData.Instance.DaysPassed / orbitalPeriodInDays) * 360f;
+
+        // Rotate the planet around the orbit
+        transform.RotateAround(transform.parent.position, Vector3.forward, rotationAngle);
+    }
+
+    private void ScalePlanetCollider()
+    {
+        float cameraOrthoSize = cam.orthographicSize;
+        float colliderScaleFactor = cameraOrthoSize; // Adjust this value as needed
+
+        CircleCollider2D collider = GetComponent<CircleCollider2D>();
+        if (collider != null && colliderScaleFactor >= 1f)
+        {
+            collider.radius = colliderScaleFactor;
+        }
     }
 
     private void GenerateAtmosphere()
@@ -60,7 +92,18 @@ public class PlanetManager : MonoBehaviour
     private void CalculateGravity()
     {
         float G = 6.674e-11f;
-        planetData.surfaceGravity = G * (planetData.mass * 5.97e24f) / Mathf.Pow(planetData.radius*6371000f, 2f);
+        float massOfPlanet = planetData.mass * 5.97e24f;
+        float radiusOfPlanet = planetData.radius*6371000f;
+        planetData.surfaceGravity = G * massOfPlanet / Mathf.Pow(radiusOfPlanet, 2f);
+        planetData.escapeVelocity = Mathf.Pow((2f * G * massOfPlanet)/radiusOfPlanet, 1/2f);
+    }
+
+    private void CalculatePeriod()
+    {
+        float G = 6.674e-11f;
+        float massOfStar = starMass * 1.989e30f;
+        float orbitalDistanceInMeters = planetData.SMA_AU * 1.496e11f;
+        planetData.orbitalPeriod = Mathf.Pow((4f * Mathf.Pow(Mathf.PI, 2f) * Mathf.Pow(orbitalDistanceInMeters, 3f))/(massOfStar * G), 1f/2f) / 31557600f;
     }
 
     private void DisplayPlanetComposition()
@@ -108,7 +151,6 @@ public class PlanetManager : MonoBehaviour
         spriteRenderer.color = color;
         spriteRenderer.sortingOrder = order; //Change order here
     }
-
 
     private void CreateRadiusMarkers(int direction)
     {
@@ -208,36 +250,66 @@ public class PlanetManager : MonoBehaviour
             {
                 // Define temperature ranges and corresponding colors
                 float coldTemperature = 200f;
-                float warmTemperature = 300f;
+                float goldilocksLowerTemperature = 270f;
+                float goldilocksUpperTemperature = 350f;
                 float hotTemperature = 450f;
+                float scorchingTemperature = 600f;
 
-                // Change the orbit color based on the planet's temperature
+                // Calculate the lerp factor based on the planet's temperature
+                float lerpFactor = 0f;
+                Color startColor, endColor;
+                Color orbitColor;
+
                 if (planetData.temperature_K < coldTemperature)
                 {
-                    orbitLineRenderer.startColor = coldColor;
-                    orbitLineRenderer.endColor = coldColor;
+                    startColor = Color.white;
+                    endColor = coldColor;
+                    lerpFactor = Mathf.InverseLerp(0, coldTemperature, planetData.temperature_K);
+                    // Interpolate between the start and end colors using the lerp factor
+                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
                 }
-                else if (planetData.temperature_K < warmTemperature)
+                else if (planetData.temperature_K < goldilocksLowerTemperature)
                 {
-                    orbitLineRenderer.startColor = warmColor;
-                    orbitLineRenderer.endColor = warmColor;
+                    startColor = coldColor;
+                    endColor = goldilocksLowerColor;
+                    lerpFactor = Mathf.InverseLerp(coldTemperature, goldilocksLowerTemperature, planetData.temperature_K);
+                                        // Interpolate between the start and end colors using the lerp factor
+                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
+                }
+                else if (planetData.temperature_K < goldilocksUpperTemperature)
+                {
+                    startColor = goldilocksLowerColor;
+                    endColor = goldilocksUpperColor;
+                    lerpFactor = Mathf.InverseLerp(goldilocksLowerTemperature, goldilocksUpperTemperature, planetData.temperature_K);
+                                        // Interpolate between the start and end colors using the lerp factor
+                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
                 }
                 else if (planetData.temperature_K < hotTemperature)
                 {
-                    orbitLineRenderer.startColor = hotColor;
-                    orbitLineRenderer.endColor = hotColor;
+                    startColor = goldilocksUpperColor;
+                    endColor = hotColor;
+                    lerpFactor = Mathf.InverseLerp(goldilocksUpperTemperature, hotTemperature, planetData.temperature_K);
+                                        // Interpolate between the start and end colors using the lerp factor
+                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
                 }
                 else
                 {
-                    orbitLineRenderer.startColor = veryHotColor;
-                    orbitLineRenderer.endColor = veryHotColor;
+                    startColor = hotColor;
+                    endColor = scorchingColor;
+                    lerpFactor = Mathf.InverseLerp(hotTemperature, scorchingTemperature, planetData.temperature_K);
+                    // Interpolate between the start and end colors using the lerp factor
+                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
                 }
+
+                // Set the orbit color
+                orbitLineRenderer.startColor = orbitColor;
+                orbitLineRenderer.endColor = orbitColor;
 
                 // Access the material for the specific orbit
                 Material orbitMaterial = orbitLineRenderer.material;
 
-                // Set the material's color to match the start color
-                orbitMaterial.SetColor("_Color", orbitLineRenderer.startColor);
+                // Set the material's color to match the orbit color
+                orbitMaterial.SetColor("_Color", orbitColor);
             }
         }
     }

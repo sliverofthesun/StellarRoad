@@ -399,6 +399,7 @@ MonoBehaviour:
   starSize: 0
   starLuminosity: 0
   starMass: 0
+  starColor: {r: 0, g: 0, b: 0, a: 0}
   distanceSeed: 0
   distanceSeedStandardDiv: 0
   firstOrbit: 0
@@ -407,7 +408,7 @@ MonoBehaviour:
   massLine: []
   planetPrefab: {fileID: 5766726128347595272, guid: 15497c60686e1a5498ee3686d87ab012, type: 3}
   uniformPlanetScale: 0.02
-  maxLineWidth: 0.15
+  maxLineWidth: 0.3
   minLineWidth: 0.002
   lineWidthDistanceFactor: 10
   minDist: 0
@@ -655,7 +656,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
