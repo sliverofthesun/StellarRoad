@@ -1,0 +1,25 @@
+public enum PlanetType
+{
+    None,
+    Solid,
+    Gas,
+    Metallic,
+    NonMetallic,
+    Ferria,
+    Carbonia,
+    SilicateRich,
+    WaterRich,
+    Terra,
+    Desertic,
+    Lava,
+    Aquaria,
+    Ice,
+    Ocean,
+    HydrogenHelium,
+    Other,
+    Jupiter,
+    PuffyJupiter,
+    Neptune,
+    MiniNeptune,
+    Chthonia
+}
