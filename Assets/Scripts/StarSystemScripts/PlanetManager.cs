@@ -31,6 +31,8 @@ public class PlanetManager : MonoBehaviour
     public Color gasColor;
     public Color liquidColor;
 
+    public float lastRecordedTime = 0;
+
     void Awake()
     {
         cam = Camera.main;
@@ -45,32 +47,69 @@ public class PlanetManager : MonoBehaviour
         UpdatePlanetDensity();
         CalculateGravity();
         CalculatePeriod();
-        UpdateTime();
         //GenerateAtmosphere();
         UpdateOrbitColor();
         DisplayPlanetComposition();
-        CreateMassMarkers(1);
-        CreateMassMarkers(-1);
-        CreateRadiusMarkers(1);
-        CreateRadiusMarkers(-1);
 
+        // Create mass and radius markers
+        CreateMarkers(planetData.mass, planetData.radius);
     }
 
     void Update()
     {
         ScalePlanetCollider();
+        UpdateTime();
     }
 
     private void UpdateTime()
     {
-        // Get the orbital period in days
-        float orbitalPeriodInDays = planetData.orbitalPeriod * 365.25f;
+        if (GameData.Instance.DaysPassed - lastRecordedTime > 0f)
+        {
+            // Get the orbital period in days
+            float orbitalPeriodInDays = planetData.orbitalPeriod * 365.25f;
 
-        // Calculate the rotation angle based on GameData.DaysPassed and the orbital period
-        float rotationAngle = (GameData.Instance.DaysPassed / orbitalPeriodInDays) * 360f;
+            // Calculate the rotation angle based on GameData.DaysPassed and the orbital period
+            float rotationAngle = ((GameData.Instance.DaysPassed - lastRecordedTime) / orbitalPeriodInDays) * 360f;
 
-        // Rotate the planet around the orbit
-        transform.RotateAround(transform.parent.position, Vector3.forward, rotationAngle);
+            lastRecordedTime = GameData.Instance.DaysPassed;
+
+            // Store the planet's position before rotation
+            Vector3 previousPosition = transform.position;
+
+            // Rotate the planet around the orbit
+            transform.RotateAround(transform.parent.position, Vector3.forward, rotationAngle);
+
+            // Calculate the difference between the previous and current position
+            Vector3 positionDifference = transform.position - previousPosition;
+
+            // Update marker positions
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                LineRenderer lineRenderer = child.GetComponent<LineRenderer>();
+
+                if (lineRenderer != null && child.tag != "OrbitRenderer")
+                {
+                    Vector3 startPosition = lineRenderer.GetPosition(0);
+                    Vector3 endPosition = lineRenderer.GetPosition(1);
+
+                    // Add the position difference to the marker positions
+                    startPosition += positionDifference;
+                    endPosition += positionDifference;
+
+                    lineRenderer.SetPosition(0, startPosition);
+                    lineRenderer.SetPosition(1, endPosition);
+                }
+            }
+        }
+    }
+
+    private Vector3 RotatePointAroundPivot(Vector3 point, Vector3 pivot, Vector3 angles)
+    {
+        Vector3 direction = point - pivot;
+        direction = Quaternion.Euler(angles) * direction;
+        point = direction + pivot;
+        return point;
     }
 
     private void ScalePlanetCollider()
@@ -152,90 +191,73 @@ public class PlanetManager : MonoBehaviour
         spriteRenderer.sortingOrder = order; //Change order here
     }
 
-    private void CreateRadiusMarkers(int direction)
+    private void CreateMarkers(float mass, float radius)
     {
-        GameObject radiusMarker = new GameObject("RadiusMarker");
-        radiusMarker.transform.SetParent(transform, false);
+        // Create mass markers
+        CreateMassOrRadiusMarkers(mass, new Vector3(1, 0, 0), false); // left
+        CreateMassOrRadiusMarkers(mass, new Vector3(-1, 0, 0), false); // right
 
-        LineRenderer lineRenderer = radiusMarker.AddComponent<LineRenderer>();
-        lineRenderer.material = massMarkerMaterial;
-        lineRenderer.startWidth = massMarkerLineWidth;
-        lineRenderer.endWidth = massMarkerLineWidth;
-
-        float lineLength = Mathf.Log(planetData.radius*10f, massMarkerLogBase) * scalingOfMassMarkersLen;
-
-        Vector3 startPosition = transform.position + new Vector3(0, distanceOfMarkerFromPlanet*direction, 0);
-        Vector3 endPosition = startPosition + new Vector3(0, lineLength*direction, 0);
-
-        lineRenderer.SetPosition(0, startPosition);
-        lineRenderer.SetPosition(1, endPosition);
-
-        float temp = massMarkerLogBase / massMarkerLogBase / massMarkerLogBase;
-        float nOfMarker = 0;
-        do 
-        {
-            CreateMarker(direction * (distanceOfMarkerFromPlanet + (nOfMarker*scalingOfMassMarkersLen)), temp, baseLogMilestoneLen, true);
-            temp = temp * massMarkerLogBase;
-            nOfMarker = nOfMarker + 1f;
-        }while (temp<planetData.radius);
+        // Create radius markers
+        CreateMassOrRadiusMarkers(radius, new Vector3(0, 1, 0), true); // up
+        CreateMassOrRadiusMarkers(radius, new Vector3(0, -1, 0), true); // down
     }
 
-    private void CreateMassMarkers(int direction)
+private void CreateMassOrRadiusMarkers(float value, Vector3 direction, bool isRadius)
+{
+    GameObject marker = new GameObject(isRadius ? "RadiusMarker" : "MassMarker");
+    marker.transform.SetParent(transform, true);
+
+    LineRenderer lineRenderer = marker.AddComponent<LineRenderer>();
+    lineRenderer.material = massMarkerMaterial;
+    lineRenderer.startWidth = massMarkerLineWidth;
+    lineRenderer.endWidth = massMarkerLineWidth;
+
+    float lineLength = Mathf.Log(value * 10f, massMarkerLogBase) * scalingOfMassMarkersLen;
+    lineLength = Mathf.Abs(lineLength);
+
+    Vector3 startPosition = transform.position + direction * distanceOfMarkerFromPlanet;
+    Vector3 endPosition = startPosition + direction * lineLength;
+
+    lineRenderer.SetPosition(0, startPosition);
+    lineRenderer.SetPosition(1, endPosition);
+
+    float temp = 0.1f;
+    float nOfMarker = 0;
+    do
     {
-        GameObject massMarker = new GameObject("MassMarker");
-        massMarker.transform.SetParent(transform, false);
+        CreateMilestoneMarker(transform.position + direction * (distanceOfMarkerFromPlanet + (nOfMarker * scalingOfMassMarkersLen)), temp, baseLogMilestoneLen, isRadius);
+        temp = temp * massMarkerLogBase;
+        nOfMarker = nOfMarker + 1f;
+    } while (temp < value);
+}
 
-        LineRenderer lineRenderer = massMarker.AddComponent<LineRenderer>();
-        lineRenderer.material = massMarkerMaterial;
-        lineRenderer.startWidth = massMarkerLineWidth;
-        lineRenderer.endWidth = massMarkerLineWidth;
+private void CreateMilestoneMarker(Vector3 position, float milestone, float lineLength, bool isRadius)
+{
+    GameObject milestoneMarker = new GameObject($"MilestoneMarker_{milestone}");
+    milestoneMarker.transform.SetParent(transform, true);
 
-        float lineLength = Mathf.Log(planetData.mass*10f, massMarkerLogBase) * scalingOfMassMarkersLen;
-        // Ensure lineLength is always positive
-        lineLength = Mathf.Abs(lineLength);
+    LineRenderer milestoneLineRenderer = milestoneMarker.AddComponent<LineRenderer>();
+    milestoneLineRenderer.material = massMarkerMaterial;
+    milestoneLineRenderer.startWidth = massMarkerLineWidth;
+    milestoneLineRenderer.endWidth = massMarkerLineWidth;
 
-        Vector3 startPosition = transform.position + new Vector3(distanceOfMarkerFromPlanet*direction, 0, 0);
-        Vector3 endPosition = startPosition + new Vector3(lineLength*direction, 0, 0);
+    Vector3 startPosition;
+    Vector3 endPosition;
 
-        lineRenderer.SetPosition(0, startPosition);
-        lineRenderer.SetPosition(1, endPosition);
-
-        float temp = 0.1f;//massMarkerLogBase / massMarkerLogBase / massMarkerLogBase;
-        float nOfMarker = 0;
-        do 
-        {
-            CreateMarker(direction * (distanceOfMarkerFromPlanet + (nOfMarker*scalingOfMassMarkersLen)), temp, baseLogMilestoneLen, false);
-            temp = temp * massMarkerLogBase;
-            nOfMarker = nOfMarker + 1f;
-        }while (temp<planetData.mass);
+    if (isRadius)
+    {
+        startPosition = position + new Vector3(lineLength * 0.5f, 0, 0);
+        endPosition = startPosition + new Vector3(lineLength * -1f, 0, 0);
+    }
+    else
+    {
+        startPosition = position + new Vector3(0, lineLength * 0.5f, 0);
+        endPosition = startPosition + new Vector3(0, lineLength * -1f, 0);
     }
 
-    private void CreateMarker(float position, float milestone, float lineLength, bool isUp)
-    {
-        GameObject milestoneMarker = new GameObject($"MilestoneMarker_{milestone}");
-        milestoneMarker.transform.SetParent(transform, false);
-
-        LineRenderer milestoneLineRenderer = milestoneMarker.AddComponent<LineRenderer>();
-        milestoneLineRenderer.material = massMarkerMaterial;
-        milestoneLineRenderer.startWidth = massMarkerLineWidth;
-        milestoneLineRenderer.endWidth = massMarkerLineWidth;
-
-        if (isUp)
-        {
-            Vector3 startPosition = transform.position + new Vector3(lineLength * 0.5f, position, 0);
-            Vector3 endPosition = startPosition + new Vector3(lineLength * -1f, 0, 0); // Adjust the -0.02f value to change the length of the vertical line
-               milestoneLineRenderer.SetPosition(0, startPosition);
-        milestoneLineRenderer.SetPosition(1, endPosition);
-        }
-        else{
-            Vector3 startPosition = transform.position + new Vector3(position, lineLength * 0.5f, 0);
-            Vector3 endPosition = startPosition + new Vector3(0, lineLength * -1f, 0); // Adjust the -0.02f value to change the length of the vertical line
-               milestoneLineRenderer.SetPosition(0, startPosition);
-        milestoneLineRenderer.SetPosition(1, endPosition);
-        }
-        
- 
-    }
+    milestoneLineRenderer.SetPosition(0, startPosition);
+    milestoneLineRenderer.SetPosition(1, endPosition);
+}
 
     private void UpdateOrbitColor()
     {

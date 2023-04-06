@@ -24,6 +24,7 @@ public class StarSystemManager : MonoBehaviour
     public float distanceSeedStandardDiv;
     public float firstOrbit;
     private float previousOrbit;
+    public float scalingFactor;
 
     public float ratioOfPlanetaryMassToStar; //used to generate how massive planets are
 
@@ -32,6 +33,11 @@ public class StarSystemManager : MonoBehaviour
     public List<float> massLine = new List<float>();
 
     public GameObject planetPrefab;
+
+    public Camera mainCamera;
+    public float minCameraSizeForVisibleOrbits = 5.0f;
+    public float orbitThicknessInPixels = 5.0f;
+    public float maxOrbitThicknessInPixels = 100.0f;
     
     // Define a uniform scale for all planets in the solar system view
     public float uniformPlanetScale = 0.02f;
@@ -47,6 +53,7 @@ public class StarSystemManager : MonoBehaviour
 
     private void Start()
     {
+        mainCamera = Camera.main;
         //Setting all the values into variables within this script
         if(GameData.Instance != null)
         {
@@ -88,11 +95,11 @@ public class StarSystemManager : MonoBehaviour
         GenerateBlaggFormulation();
 
         // Add the scaling factor calculation
-        float scalingFactor = firstOrbitRadiusInUnits / (firstOrbit * 10f);
-        Debug.Log(scalingFactor);
+        scalingFactor = firstOrbitRadiusInUnits / (firstOrbit * 10f);
+        
         if (!float.IsInfinity(scalingFactor) && !float.IsNaN(scalingFactor) && scalingFactor != 0)
         {
-            star.transform.localScale = Vector3.one * starSize * scalingFactor;
+            star.transform.localScale = Vector3.one * (1f+Mathf.Log(starSize,10));
         }
         else
         {
@@ -131,18 +138,51 @@ public class StarSystemManager : MonoBehaviour
 
     private void UpdateOrbitLineWidth()
     {
-        Camera mainCamera = Camera.main;
         float cameraSize = mainCamera.orthographicSize;
         float lineWidth;
 
+        if (cameraSize > 1.25f * minCameraSizeForVisibleOrbits)
+        {
+            float minLineWidth = orbitThicknessInPixels / mainCamera.pixelHeight;
+            float maxLineWidth = maxOrbitThicknessInPixels / mainCamera.pixelHeight;
+            lineWidth = minLineWidth + ((cameraSize - 1.25f * minCameraSizeForVisibleOrbits) * (maxLineWidth - minLineWidth));
+        }
+        else if (cameraSize < 0.75f * minCameraSizeForVisibleOrbits)
+        {
+            SetOrbitLineVisibility(false);
+            return;
+        }
+        else
+        {
+            float minLineWidth = 0;
+            float maxLineWidth = maxOrbitThicknessInPixels / mainCamera.pixelHeight;
+            lineWidth = minLineWidth + ((cameraSize - 0.75f * minCameraSizeForVisibleOrbits) * (maxLineWidth - minLineWidth));
+        }
+
+        SetOrbitLineWidth(lineWidth);
+        SetOrbitLineVisibility(true);
+    }
+
+    private void SetOrbitLineWidth(float lineWidth)
+    {
         GameObject[] orbitObjects = GameObject.FindGameObjectsWithTag("OrbitRenderer");
 
         foreach (GameObject orbit in orbitObjects)
         {
             LineRenderer lineRenderer = orbit.GetComponent<LineRenderer>();
-            lineWidth = Mathf.Lerp(minLineWidth, maxLineWidth, 1 - Mathf.Exp(-cameraSize / lineWidthDistanceFactor));
             lineRenderer.startWidth = lineWidth;
             lineRenderer.endWidth = lineWidth;
+        }
+    }
+
+    private void SetOrbitLineVisibility(bool visible)
+    {
+        GameObject[] orbitObjects = GameObject.FindGameObjectsWithTag("OrbitRenderer");
+
+        foreach (GameObject orbit in orbitObjects)
+        {
+            LineRenderer lineRenderer = orbit.GetComponent<LineRenderer>();
+            lineRenderer.enabled = visible;
         }
     }
 
@@ -269,23 +309,21 @@ public class StarSystemManager : MonoBehaviour
 
     public void GenerateBlaggFormulation()
     {
-        distanceSeed = randomValueBasedONGauss(1.8275f, 0.125f, 1.2f, 100000f);
+        distanceSeed = randomValueBasedONGauss(1.8275f, 0.125f, 1.2f, 100000f); //how much farther away are the planets from their neighbours
         Debug.Log("Distance factor is: " + distanceSeed);
 
-        distanceSeedStandardDiv = Mathf.Abs(randomValueBasedONGauss(0f,10f,-1000f, 100000f)/100f);
+        distanceSeedStandardDiv = Mathf.Abs(randomValueBasedONGauss(0f,10f,-1000f, 100000f)/100f); //this is a percentage deviation from distance seed
         Debug.Log("Distance variance standard div is: " + distanceSeedStandardDiv);
 
         //Calculating the innermost orbit using trappist one and solar system as raff guideline
-        firstOrbit = randomValueBasedONGauss(45f, 25f, 5f, 100000f);
-        firstOrbit = (firstOrbit * starSize) / 215f;
+        firstOrbit = randomValueBasedONGauss(45f, 25f, 5f, 100000f); //this is in solar radii
+        firstOrbit = (firstOrbit * starSize) / 215f; // dividing by 215 bcuz 1 AU =  215 solar radi
+
         Debug.Log("First orbit is: " + firstOrbit);
     }
 
     public void GeneratePlanets()
     {
-        // Add the scaling factor calculation outside the loop
-        float scalingFactor = firstOrbitRadiusInUnits / (firstOrbit * 5f);
-
         for (int i = 0; i < nOfPlanets; i++)
         {
 

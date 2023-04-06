@@ -37,6 +37,7 @@ public class CameraStarSystem : MonoBehaviour
 
         // Handle zooming in and out
         float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        
         if (scrollInput != 0)
         {
             Vector3 mousePositionBeforeZoom = cam.ScreenToWorldPoint(Input.mousePosition);
