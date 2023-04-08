@@ -4,23 +4,34 @@ using UnityEngine;
 
 public class CameraStarSystem : MonoBehaviour
 {
-    [SerializeField] public float basePanSpeed = 1.0f;
     [SerializeField] private Camera cam;
+    [SerializeField] private GameObject player;
+
+    [SerializeField] private float basePanSpeed = 1.0f;
     [SerializeField] private float baseZoomSpeed = 1.0f;
     [SerializeField] private float maxZoomOut = 500.0f;
+    [SerializeField] private float cameraAccelerationTime = 0.33f;
+    [SerializeField] private float maxSpeed = 10f;
+
+    private Vector3 lastMousePosition;
+    private Vector3 targetPosition;
+
+    private bool movingCamToPlayer = false;
+    private float fKeyHoldTime = 0f;
+    private bool cameraFollowsPlayer = false;
 
     public string inputBuffer = "";
 
-    private Vector3 lastMousePosition;
-
-    // Start is called before the first frame update
-    void Start()
+    void Update()
     {
-
+        HandleCameraPanning();
+        HandleCameraZooming();
+        HandlePlanetSelectionInput();
+        HandleCameraFlyToPlayer();
     }
 
-    // Update is called once per frame
-    void Update()
+    // Handles camera panning when middle mouse button is held down
+    private void HandleCameraPanning()
     {
         if (Input.GetMouseButtonDown(2))
         {
@@ -29,15 +40,20 @@ public class CameraStarSystem : MonoBehaviour
 
         if (Input.GetMouseButton(2))
         {
+            movingCamToPlayer = false;
+            cameraFollowsPlayer = false;
             float panSpeed = basePanSpeed * cam.orthographicSize;
             Vector3 direction = lastMousePosition - cam.ScreenToViewportPoint(Input.mousePosition);
             cam.transform.position += new Vector3(direction.x * panSpeed, direction.y * panSpeed, 0);
             lastMousePosition = cam.ScreenToViewportPoint(Input.mousePosition);
         }
+    }
 
-        // Handle zooming in and out
+    // Handles camera zooming based on mouse scroll wheel input
+    private void HandleCameraZooming()
+    {
         float scrollInput = Input.GetAxis("Mouse ScrollWheel");
-        
+
         if (scrollInput != 0)
         {
             Vector3 mousePositionBeforeZoom = cam.ScreenToWorldPoint(Input.mousePosition);
@@ -47,22 +63,24 @@ public class CameraStarSystem : MonoBehaviour
 
             cam.transform.position += mousePositionBeforeZoom - mousePositionAfterZoom;
         }
+    }
 
-        // Handle input for numbers 0-9 and backspace
+    // Handles the input of numbers and backspace for planet selection
+    private void HandlePlanetSelectionInput()
+    {
         foreach (char c in Input.inputString)
         {
-            if (char.IsDigit(c) || c == '\b') // Check if the character is a digit or a backspace
+            if (char.IsDigit(c) || c == '\b')
             {
                 inputBuffer += c;
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.Backspace))
+        if (Input.GetKeyDown(KeyCode.Backspace))
         {
             inputBuffer = "";
         }
 
-        // Check if the 'Enter' key is pressed
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
             if (int.TryParse(inputBuffer, out int orderInSystem))
@@ -70,15 +88,62 @@ public class CameraStarSystem : MonoBehaviour
                 GameObject targetPlanet = FindPlanetByOrder(orderInSystem);
                 if (targetPlanet != null)
                 {
+                    movingCamToPlayer = false;
+                    cameraFollowsPlayer = false;
                     float distance = Vector3.Distance(cam.transform.position, targetPlanet.transform.position);
-                    float duration = Mathf.Clamp(distance * 0.01f, 0.5f, 3.0f); // Adjust the speed based on distance
+                    float duration = Mathf.Clamp(distance * 0.01f, 0.5f, 3.0f);
                     StartCoroutine(MoveCameraToPlanet(targetPlanet, duration));
                 }
             }
-            inputBuffer = ""; // Clear the input buffer
+            inputBuffer = "";
         }
     }
 
+    private void HandleCameraFlyToPlayer()
+    {
+        if (Input.GetKeyDown(KeyCode.F) && !cameraFollowsPlayer)
+        {
+            movingCamToPlayer = true;
+            targetPosition = new Vector3(player.transform.position.x, player.transform.position.y, cam.transform.position.z);
+        }
+
+        if (Input.GetKey(KeyCode.F))
+        {
+            fKeyHoldTime += Time.deltaTime;
+            if (fKeyHoldTime >= 1.0f)
+            {
+                cameraFollowsPlayer = !cameraFollowsPlayer;
+                movingCamToPlayer = false;
+                fKeyHoldTime = 0f;
+            }
+        }
+        else
+        {
+            fKeyHoldTime = 0f;
+        }
+
+        if (movingCamToPlayer)
+        {
+            targetPosition = new Vector3(player.transform.position.x, player.transform.position.y, cam.transform.position.z);
+            float distanceToTarget = Vector3.Distance(cam.transform.position, targetPosition);
+            float speed = Mathf.Min(maxSpeed, distanceToTarget / cameraAccelerationTime);
+            Vector3 direction = (targetPosition - cam.transform.position).normalized;
+            cam.transform.position += new Vector3(direction.x * speed * Time.deltaTime, direction.y * speed * Time.deltaTime, 0);
+
+            if (Vector2.Distance(new Vector2(cam.transform.position.x, cam.transform.position.y), new Vector2(targetPosition.x, targetPosition.y)) < 0.02f)
+            {
+                movingCamToPlayer = false;
+            }
+        }
+
+        if (cameraFollowsPlayer && !movingCamToPlayer)
+        {
+            cam.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, cam.transform.position.z);
+        }
+    }
+
+
+    // Finds a planet GameObject by its order in the system
     private GameObject FindPlanetByOrder(int orderInSystem)
     {
         GameObject[] planets = GameObject.FindGameObjectsWithTag("Planet");
@@ -93,6 +158,7 @@ public class CameraStarSystem : MonoBehaviour
         return null;
     }
 
+    // Coroutine for moving the camera to a target planet smoothly
     IEnumerator MoveCameraToPlanet(GameObject targetPlanet, float duration)
     {
         Vector3 startPosition = cam.transform.position;

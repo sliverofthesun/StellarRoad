@@ -35,6 +35,7 @@ public class WorldGenerator : MonoBehaviour
     private void Start()
     {
         Instance = this;
+        GameData.Instance.PlayerScenePosition = 1;
 
         seed = GameData.Instance != null ? GameData.Instance.UniverseSeed : 0; // Using ternary operator to simplify the assignment
         GenerateWorld(seed);
@@ -46,7 +47,7 @@ public class WorldGenerator : MonoBehaviour
         GenerateStarsInChunk(Vector2Int.zero);
         OnWorldGenerated?.Invoke();
 
-        Vector3 playerPos = GameData.Instance.UniversePlayerPosition != null ? GameData.Instance.UniversePlayerPosition : Vector3.zero; // Using ternary operator to simplify the assignment
+        Vector3 playerPos = GameData.Instance.PlayerPosition != null ? GameData.Instance.PlayerPosition : Vector3.zero; // Using ternary operator to simplify the assignment
         playerController.SetPlayerPosition(playerPos);
 
         cameraController.SetCameraAbovePlayer(playerController.transform.position);

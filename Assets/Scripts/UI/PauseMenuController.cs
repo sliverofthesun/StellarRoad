@@ -98,27 +98,19 @@ public class PauseMenuController : MonoBehaviour
 
             if (GameData.Instance == null)
             {
-                Debug.LogError("GameData.Instance is null.");
-                return;
+                GameObject gameDataObject = new GameObject("GameData");
+                Debug.Log("GameData was null, new one created!");
+                gameDataObject.AddComponent<GameData>();
             }
 
-            // Set the data in the GameData instance
-            GameData.Instance.PlayerScenePosition = saveData.playerScenePosition;
-            GameData.Instance.UniverseSeed = saveData.universeSeed;
-            GameData.Instance.SystemSeed = saveData.systemSeed;
-            GameData.Instance.UniversePlayerPosition = saveData.playerUniversePosition;
-            GameData.Instance.CameraPosition = saveData.cameraPosition;
-            GameData.Instance.StarMass = saveData.starMass;
-            GameData.Instance.StarSize = saveData.starSize;
-            GameData.Instance.StarLuminosity = saveData.starLuminosity;
-            GameData.Instance.NumberOfPlanets = saveData.numberOfPlanets;
-            GameData.Instance.StarColor = saveData.starColor;
-            GameData.Instance.DaysPassed = saveData.timeInDays;
+            // Set the entire GameData instance to the loaded data
+            GameData.Instance.FromSaveData(saveData);
 
             Debug.Log("Game loaded from: " + saveFilePath);
 
-            // Load the proper scene based on the playerScenePosition and start the WaitForSceneLoad coroutine
-            StartCoroutine(WaitForSceneLoad(saveData));
+            // Load the scene based on the player's scene position from the saved data
+            Debug.Log("GameData.Instance.PlayerScenePosition: " + GameData.Instance.PlayerScenePosition);
+            SceneManager.LoadScene(GameData.Instance.PlayerScenePosition);
         }
     }
 
@@ -194,8 +186,6 @@ public class PauseMenuController : MonoBehaviour
 
     }
 
-
-
     private void Options()
     {
         // Implement option functionality here
@@ -207,32 +197,7 @@ public class PauseMenuController : MonoBehaviour
         int playerScenePosition = SceneManager.GetActiveScene().buildIndex;
 
         // Save data based on the current scene
-        if (playerScenePosition == 1) // Universe view
-        {
-            WorldGenerator worldGenerator = FindObjectOfType<WorldGenerator>();
-            int seed = worldGenerator.Seed;
-            if (string.IsNullOrEmpty(saveFilePath))
-            {
-                string savesFolderPath = Application.persistentDataPath + "/saves";
-                if (!Directory.Exists(savesFolderPath))
-                {
-                    Directory.CreateDirectory(savesFolderPath);
-                }
-                int saveNumber = Directory.GetFiles(savesFolderPath, "*.json").Length + 1;
-
-                string dateTimeString = System.DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
-                saveFilePath = $"{savesFolderPath}/save_{saveNumber:000}_seed_{seed}_{dateTimeString}.json";
-            }
-            
-            Vector3 cameraPosition = Camera.main.transform.position;
-            PlayerController playerController = FindObjectOfType<PlayerController>();
-            Vector3 playerPosition = playerController.transform.position;
-
-            SaveData saveData = new SaveData(playerScenePosition, playerPosition, 0, cameraPosition);
-            string json = JsonUtility.ToJson(saveData, true);
-            File.WriteAllText(saveFilePath, json);
-        }
-        else if (playerScenePosition == 2) // Star system view
+        if (playerScenePosition == 1 || playerScenePosition == 2) // Universe or Star System view
         {
             int seed = GameData.Instance.UniverseSeed;
             if (string.IsNullOrEmpty(saveFilePath))
@@ -247,15 +212,11 @@ public class PauseMenuController : MonoBehaviour
                 string dateTimeString = System.DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
                 saveFilePath = $"{savesFolderPath}/save_{saveNumber:000}_seed_{seed}_{dateTimeString}.json";
             }
-            
+
             Vector3 cameraPosition = Camera.main.transform.position;
-            //PlayerController playerController = FindObjectOfType<PlayerController>();
-            //Vector3 playerPosition = playerController.transform.position;
-
-            StarSystemManager systemManager = FindObjectOfType<StarSystemManager>();
-            int starSystemSeed = systemManager.starSystemSeed;
-
-            SaveData saveData = new SaveData(playerScenePosition, GameData.Instance.UniversePlayerPosition, starSystemSeed, cameraPosition);
+            Vector3 playerPosition = playerScenePosition == 1 ? FindObjectOfType<PlayerController>().transform.position : GameData.Instance.PlayerPosition;
+            SaveData saveData = GameData.Instance.ToSaveData();
+            //SaveData saveData = new SaveData(playerScenePosition, playerPosition, 0, cameraPosition);
             string json = JsonUtility.ToJson(saveData, true);
             File.WriteAllText(saveFilePath, json);
         }

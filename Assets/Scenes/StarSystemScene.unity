@@ -157,6 +157,7 @@ MonoBehaviour:
   speedAUPerHour: 0.1
   unityUnitsPerAU: 10
   optimalHours: 0
+  timeScaleFactor: 3600
 --- !u!4 &99329392
 Transform:
   m_ObjectHideFlags: 0
@@ -778,10 +779,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f1bf04e0f92f5546b926e0c2ae5d8c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  basePanSpeed: 1
   cam: {fileID: 1910896206}
+  player: {fileID: 99329390}
+  basePanSpeed: 1
   baseZoomSpeed: 1
   maxZoomOut: 2000
+  cameraAccelerationTime: 0.33
+  maxSpeed: 250
   inputBuffer: 
 --- !u!114 &1910896209
 MonoBehaviour:

@@ -202,139 +202,154 @@ public class PlanetManager : MonoBehaviour
         CreateMassOrRadiusMarkers(radius, new Vector3(0, -1, 0), true); // down
     }
 
-private void CreateMassOrRadiusMarkers(float value, Vector3 direction, bool isRadius)
-{
-    GameObject marker = new GameObject(isRadius ? "RadiusMarker" : "MassMarker");
-    marker.transform.SetParent(transform, true);
-
-    LineRenderer lineRenderer = marker.AddComponent<LineRenderer>();
-    lineRenderer.material = massMarkerMaterial;
-    lineRenderer.startWidth = massMarkerLineWidth;
-    lineRenderer.endWidth = massMarkerLineWidth;
-
-    float lineLength = Mathf.Log(value * 10f, massMarkerLogBase) * scalingOfMassMarkersLen;
-    lineLength = Mathf.Abs(lineLength);
-
-    Vector3 startPosition = transform.position + direction * distanceOfMarkerFromPlanet;
-    Vector3 endPosition = startPosition + direction * lineLength;
-
-    lineRenderer.SetPosition(0, startPosition);
-    lineRenderer.SetPosition(1, endPosition);
-
-    float temp = 0.1f;
-    float nOfMarker = 0;
-    do
+    private void CreateMassOrRadiusMarkers(float value, Vector3 direction, bool isRadius)
     {
-        CreateMilestoneMarker(transform.position + direction * (distanceOfMarkerFromPlanet + (nOfMarker * scalingOfMassMarkersLen)), temp, baseLogMilestoneLen, isRadius);
-        temp = temp * massMarkerLogBase;
-        nOfMarker = nOfMarker + 1f;
-    } while (temp < value);
-}
+        GameObject marker = new GameObject(isRadius ? "RadiusMarker" : "MassMarker");
+        marker.transform.SetParent(transform, true);
 
-private void CreateMilestoneMarker(Vector3 position, float milestone, float lineLength, bool isRadius)
-{
-    GameObject milestoneMarker = new GameObject($"MilestoneMarker_{milestone}");
-    milestoneMarker.transform.SetParent(transform, true);
+        LineRenderer lineRenderer = marker.AddComponent<LineRenderer>();
+        lineRenderer.material = massMarkerMaterial;
+        lineRenderer.startWidth = massMarkerLineWidth;
+        lineRenderer.endWidth = massMarkerLineWidth;
 
-    LineRenderer milestoneLineRenderer = milestoneMarker.AddComponent<LineRenderer>();
-    milestoneLineRenderer.material = massMarkerMaterial;
-    milestoneLineRenderer.startWidth = massMarkerLineWidth;
-    milestoneLineRenderer.endWidth = massMarkerLineWidth;
+        float lineLength = Mathf.Log(value * 10f, massMarkerLogBase) * scalingOfMassMarkersLen;
+        lineLength = Mathf.Abs(lineLength);
 
-    Vector3 startPosition;
-    Vector3 endPosition;
+        Vector3 startPosition = transform.position + direction * distanceOfMarkerFromPlanet;
+        Vector3 endPosition = startPosition + direction * lineLength;
 
-    if (isRadius)
-    {
-        startPosition = position + new Vector3(lineLength * 0.5f, 0, 0);
-        endPosition = startPosition + new Vector3(lineLength * -1f, 0, 0);
-    }
-    else
-    {
-        startPosition = position + new Vector3(0, lineLength * 0.5f, 0);
-        endPosition = startPosition + new Vector3(0, lineLength * -1f, 0);
+        lineRenderer.SetPosition(0, startPosition);
+        lineRenderer.SetPosition(1, endPosition);
+
+        float temp = 0.1f;
+        float nOfMarker = 0;
+        do
+        {
+            CreateMilestoneMarker(transform.position + direction * (distanceOfMarkerFromPlanet + (nOfMarker * scalingOfMassMarkersLen)), temp, baseLogMilestoneLen, isRadius);
+            temp = temp * massMarkerLogBase;
+            nOfMarker = nOfMarker + 1f;
+        } while (temp < value);
     }
 
-    milestoneLineRenderer.SetPosition(0, startPosition);
-    milestoneLineRenderer.SetPosition(1, endPosition);
-}
+    private void CreateMilestoneMarker(Vector3 position, float milestone, float lineLength, bool isRadius)
+    {
+        GameObject milestoneMarker = new GameObject($"MilestoneMarker_{milestone}");
+        milestoneMarker.transform.SetParent(transform, true);
+
+        LineRenderer milestoneLineRenderer = milestoneMarker.AddComponent<LineRenderer>();
+        milestoneLineRenderer.material = massMarkerMaterial;
+        milestoneLineRenderer.startWidth = massMarkerLineWidth;
+        milestoneLineRenderer.endWidth = massMarkerLineWidth;
+
+        Vector3 startPosition;
+        Vector3 endPosition;
+
+        if (isRadius)
+        {
+            startPosition = position + new Vector3(lineLength * 0.5f, 0, 0);
+            endPosition = startPosition + new Vector3(lineLength * -1f, 0, 0);
+        }
+        else
+        {
+            startPosition = position + new Vector3(0, lineLength * 0.5f, 0);
+            endPosition = startPosition + new Vector3(0, lineLength * -1f, 0);
+        }
+
+        milestoneLineRenderer.SetPosition(0, startPosition);
+        milestoneLineRenderer.SetPosition(1, endPosition);
+    }
 
     private void UpdateOrbitColor()
+    {
+        LineRenderer orbitLineRenderer = GetOrbitLineRenderer();
+
+        if (orbitLineRenderer != null)
+        {
+            // Define temperature ranges
+            float coldTemperature = 200f;
+            float goldilocksLowerTemperature = 270f;
+            float goldilocksUpperTemperature = 350f;
+            float hotTemperature = 450f;
+            float scorchingTemperature = 600f;
+
+            // Calculate the orbit color based on the planet's temperature
+            Color orbitColor = GetOrbitColor(coldTemperature, goldilocksLowerTemperature, goldilocksUpperTemperature,
+                hotTemperature, scorchingTemperature);
+
+            // Set the orbit color
+            SetOrbitColor(orbitLineRenderer, orbitColor);
+        }
+    }
+
+    private LineRenderer GetOrbitLineRenderer()
     {
         // Find the orbit child
         Transform orbitChild = transform.Find("orbitPrefab(Clone)");
         if (orbitChild != null)
         {
             // Access the LineRenderer component
-            LineRenderer orbitLineRenderer = orbitChild.GetComponent<LineRenderer>();
+            return orbitChild.GetComponent<LineRenderer>();
+        }
 
-            if (orbitLineRenderer != null)
+        return null;
+    }
+
+    private Color GetOrbitColor(float coldTemperature, float goldilocksLowerTemperature, float goldilocksUpperTemperature,
+        float hotTemperature, float scorchingTemperature)
+    {
+        // Define the color ranges
+        ColorRange[] colorRanges = new ColorRange[]
+        {
+            new ColorRange(0, coldTemperature, Color.white, coldColor),
+            new ColorRange(coldTemperature, goldilocksLowerTemperature, coldColor, goldilocksLowerColor),
+            new ColorRange(goldilocksLowerTemperature, goldilocksUpperTemperature, goldilocksLowerColor, goldilocksUpperColor),
+            new ColorRange(goldilocksUpperTemperature, hotTemperature, goldilocksUpperColor, hotColor),
+            new ColorRange(hotTemperature, scorchingTemperature, hotColor, scorchingColor)
+        };
+
+        // Calculate the lerp factor and interpolate between the start and end colors
+        foreach (ColorRange colorRange in colorRanges)
+        {
+            if (planetData.temperature_K < colorRange.upperTemperature)
             {
-                // Define temperature ranges and corresponding colors
-                float coldTemperature = 200f;
-                float goldilocksLowerTemperature = 270f;
-                float goldilocksUpperTemperature = 350f;
-                float hotTemperature = 450f;
-                float scorchingTemperature = 600f;
-
-                // Calculate the lerp factor based on the planet's temperature
-                float lerpFactor = 0f;
-                Color startColor, endColor;
-                Color orbitColor;
-
-                if (planetData.temperature_K < coldTemperature)
-                {
-                    startColor = Color.white;
-                    endColor = coldColor;
-                    lerpFactor = Mathf.InverseLerp(0, coldTemperature, planetData.temperature_K);
-                    // Interpolate between the start and end colors using the lerp factor
-                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
-                }
-                else if (planetData.temperature_K < goldilocksLowerTemperature)
-                {
-                    startColor = coldColor;
-                    endColor = goldilocksLowerColor;
-                    lerpFactor = Mathf.InverseLerp(coldTemperature, goldilocksLowerTemperature, planetData.temperature_K);
-                                        // Interpolate between the start and end colors using the lerp factor
-                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
-                }
-                else if (planetData.temperature_K < goldilocksUpperTemperature)
-                {
-                    startColor = goldilocksLowerColor;
-                    endColor = goldilocksUpperColor;
-                    lerpFactor = Mathf.InverseLerp(goldilocksLowerTemperature, goldilocksUpperTemperature, planetData.temperature_K);
-                                        // Interpolate between the start and end colors using the lerp factor
-                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
-                }
-                else if (planetData.temperature_K < hotTemperature)
-                {
-                    startColor = goldilocksUpperColor;
-                    endColor = hotColor;
-                    lerpFactor = Mathf.InverseLerp(goldilocksUpperTemperature, hotTemperature, planetData.temperature_K);
-                                        // Interpolate between the start and end colors using the lerp factor
-                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
-                }
-                else
-                {
-                    startColor = hotColor;
-                    endColor = scorchingColor;
-                    lerpFactor = Mathf.InverseLerp(hotTemperature, scorchingTemperature, planetData.temperature_K);
-                    // Interpolate between the start and end colors using the lerp factor
-                    orbitColor = Color.Lerp(startColor, endColor, lerpFactor);
-                }
-
-                // Set the orbit color
-                orbitLineRenderer.startColor = orbitColor;
-                orbitLineRenderer.endColor = orbitColor;
-
-                // Access the material for the specific orbit
-                Material orbitMaterial = orbitLineRenderer.material;
-
-                // Set the material's color to match the orbit color
-                orbitMaterial.SetColor("_Color", orbitColor);
+                float lerpFactor = Mathf.InverseLerp(colorRange.lowerTemperature, colorRange.upperTemperature, planetData.temperature_K);
+                return Color.Lerp(colorRange.startColor, colorRange.endColor, lerpFactor);
             }
         }
+
+        // Default to scorching color if the temperature is above the highest range
+        return scorchingColor;
     }
+
+    private void SetOrbitColor(LineRenderer orbitLineRenderer, Color orbitColor)
+    {
+        orbitLineRenderer.startColor = orbitColor;
+        orbitLineRenderer.endColor = orbitColor;
+
+        // Access the material for the specific orbit
+        Material orbitMaterial = orbitLineRenderer.material;
+
+        // Set the material's color to match the orbit color
+        orbitMaterial.SetColor("_Color", orbitColor);
+    }
+
+    // Helper class to store color range data
+    private class ColorRange
+    {
+        public float lowerTemperature;
+        public float upperTemperature;
+        public Color startColor;
+        public Color endColor;
+
+        public ColorRange(float lowerTemperature, float upperTemperature, Color startColor, Color endColor)
+        {
+            this.lowerTemperature = lowerTemperature;
+            this.upperTemperature = upperTemperature;
+            this.startColor = startColor;
+            this.endColor = endColor;
+        }
+    }
+
 
     public void SetPlanetData(Planet data)
     {
@@ -414,57 +429,75 @@ private void CreateMilestoneMarker(Vector3 position, float milestone, float line
         float temperature = AUToKelvin(distanceInAU);
         PlanetComposition composition = new PlanetComposition();
 
+        // Calculate odds of each composition type
+        float oddsOfGasGiant = CalculateGasGiantOdds(temperature, planetMass);
+        float oddsOfWater = CalculateWaterOdds(temperature);
+        float oddsOfSilicaAndMetal = CalculateSilicaAndMetalOdds(temperature);
+        float totalOdds = oddsOfGasGiant + oddsOfWater + oddsOfSilicaAndMetal;
+
+        // Normalize odds
+        oddsOfGasGiant /= totalOdds;
+        oddsOfWater /= totalOdds;
+
+        // Determine composition type based on random value and calculated odds
         float compositionOutline = Random.value;
-        float oddsOfGasGiant = temperature > 340f ? 0.05f : 0.1f*((temperature-340f)/50f+1f); //5% chance for gas world if too hot
-        oddsOfGasGiant = oddsOfGasGiant * (planetMass/3f);
-        float oddsOfWater = temperature > 340f ? 0f : 0.1f*((temperature-340f)/30f+1f); //0 chance for water world if too hot
-        float oddsOfSilicaAndMetal = temperature < 340f ? 0.9f/((Mathf.Abs(temperature-340f)/30f)+1f) : 0.9f; //cloase t0 chance for no water when cold
-
-        float t = oddsOfGasGiant + oddsOfWater + oddsOfSilicaAndMetal;
-        oddsOfGasGiant = oddsOfGasGiant / t;
-        oddsOfWater = oddsOfWater / t;
-
         if (compositionOutline < oddsOfGasGiant)
         {
-            // Set gas giant composition
-            if (temperature > 303f) //to account for no water where too hot
-            {
-                composition.percentageOfGases = 1f;
-            }
-            else
-            {
-                composition.percentageOfGases = randomValueBasedONGauss(100f, 3f, 25f, 100f)/100f;
-            }
-
-            composition.percentageOfLiquids = 1f - composition.percentageOfGases;
-            composition.percentageOfSilicates = 0f;
-            composition.percentageOfMetals = 0f;
-
-            planetData.compositionDescriptor = "Gaseous";
+            SetGasGiantComposition(ref composition, temperature);
         }
-        else if(compositionOutline < oddsOfWater + oddsOfGasGiant)
+        else if (compositionOutline < oddsOfWater + oddsOfGasGiant)
         {
-            composition.percentageOfGases = 0f;
-            composition.percentageOfLiquids = Random.value;
-            composition.percentageOfSilicates = (1f-composition.percentageOfLiquids)*Random.value;
-            composition.percentageOfMetals = 1f - composition.percentageOfLiquids - composition.percentageOfSilicates;
-            planetData.compositionDescriptor = "Aqueous";
+            SetWaterComposition(ref composition);
         }
         else
         {
-            composition.percentageOfGases = 0f;
-            composition.percentageOfLiquids = 0f;
-            composition.percentageOfSilicates = randomValueBasedONGauss(50f, 50f, 0f, 100f)/100f;
-            composition.percentageOfMetals = 1f - composition.percentageOfSilicates;
-            if(composition.percentageOfSilicates>composition.percentageOfMetals)
-            {
-                planetData.compositionDescriptor = "Silicic";
-            }
-            else{
-                planetData.compositionDescriptor = "Metallic";
-            }
+            SetSilicaAndMetalComposition(ref composition);
         }
 
         planetData.composition = composition;
     }
+
+    private float CalculateGasGiantOdds(float temperature, float planetMass)
+    {
+        float baseOdds = temperature > 340f ? 0.05f : 0.1f * ((temperature - 340f) / 50f + 1f);
+        return baseOdds * (planetMass / 3f);
+    }
+
+    private float CalculateWaterOdds(float temperature)
+    {
+        return temperature > 340f ? 0f : 0.1f * ((temperature - 340f) / 30f + 1f);
+    }
+
+    private float CalculateSilicaAndMetalOdds(float temperature)
+    {
+        return temperature < 340f ? 0.9f / ((Mathf.Abs(temperature - 340f) / 30f) + 1f) : 0.9f;
+    }
+
+    private void SetGasGiantComposition(ref PlanetComposition composition, float temperature)
+    {
+        composition.percentageOfGases = temperature > 303f ? 1f : randomValueBasedONGauss(100f, 3f, 25f, 100f) / 100f;
+        composition.percentageOfLiquids = 1f - composition.percentageOfGases;
+        composition.percentageOfSilicates = 0f;
+        composition.percentageOfMetals = 0f;
+        planetData.compositionDescriptor = "Gaseous";
+    }
+
+    private void SetWaterComposition(ref PlanetComposition composition)
+    {
+        composition.percentageOfGases = 0f;
+        composition.percentageOfLiquids = Random.value;
+        composition.percentageOfSilicates = (1f - composition.percentageOfLiquids) * Random.value;
+        composition.percentageOfMetals = 1f - composition.percentageOfLiquids - composition.percentageOfSilicates;
+        planetData.compositionDescriptor = "Aqueous";
+    }
+
+    private void SetSilicaAndMetalComposition(ref PlanetComposition composition)
+    {
+        composition.percentageOfGases = 0f;
+        composition.percentageOfLiquids = 0f;
+        composition.percentageOfSilicates = randomValueBasedONGauss(50f, 50f, 0f, 100f) / 100f;
+        composition.percentageOfMetals = 1f - composition.percentageOfSilicates;
+        planetData.compositionDescriptor = composition.percentageOfSilicates > composition.percentageOfMetals ? "Silicic" : "Metallic";
+    }
+
 }

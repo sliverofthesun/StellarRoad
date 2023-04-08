@@ -1,7 +1,11 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
+// In GameData.cs
+[System.Serializable]
 public class GameData : MonoBehaviour
 {
+    [SerializeField]
     public static GameData Instance;
 
     [SerializeField]
@@ -13,8 +17,8 @@ public class GameData : MonoBehaviour
     public StarSystemController CurrentStarSystemController { get => _currentStarSystemController; set => _currentStarSystemController = value; }
 
     [SerializeField]
-    private Vector3 _universePlayerPosition;
-    public Vector3 UniversePlayerPosition { get => _universePlayerPosition; set => _universePlayerPosition = value; }
+    private Vector3 _playerPosition;
+    public Vector3 PlayerPosition { get => _playerPosition; set => _playerPosition = value; }
 
     [SerializeField]
     private Vector3 _cameraPosition;
@@ -75,5 +79,49 @@ public class GameData : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        // Add a debug log to confirm that the GameData instance is initialized
+        Debug.Log("GameData instance initialized");
+    }
+
+    // Add a new method to create a SaveData instance from the current GameData instance
+    public SaveData ToSaveData()
+    {
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+
+        SaveData saveData = new SaveData
+        {
+            playerScenePosition = currentSceneIndex,
+            playerPosition = PlayerPosition,
+            daysPassed = DaysPassed,
+            cameraPosition = CameraPosition,
+            universeSeed = UniverseSeed,
+            systemSeed = SystemSeed,
+            numberOfPlanets = NumberOfPlanets,
+            starMass = StarMass,
+            starLuminosity = StarLuminosity,
+            starSize = StarSize,
+            starColor = StarColor,
+        };
+
+        return saveData;
+    }
+
+    // Update FromSaveData() method
+    public void FromSaveData(SaveData saveData)
+    {
+        PlayerScenePosition = saveData.playerScenePosition;
+        PlayerPosition = saveData.playerPosition;
+        DaysPassed = saveData.daysPassed;
+        CameraPosition = saveData.cameraPosition;
+        UniverseSeed = saveData.universeSeed;
+        SystemSeed = saveData.systemSeed;
+        StarColor = saveData.starColor;
+        DaysPassed = saveData.daysPassed;
+        NumberOfPlanets = saveData.numberOfPlanets;
+        StarMass = saveData.starMass;
+        StarLuminosity = saveData.starLuminosity;
+        StarSize = saveData.starSize;
+        StarColor = saveData.starColor;
     }
 }

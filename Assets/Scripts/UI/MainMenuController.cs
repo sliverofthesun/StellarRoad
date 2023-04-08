@@ -26,6 +26,13 @@ public class MainMenuController : MonoBehaviour
         // Set up the save panel
         savePanel.SetActive(false);
         loadGameButton.onClick.AddListener(OpenLoadPanel);
+
+        // Initialize GameData instance if it's not already initialized
+        if (GameData.Instance == null)
+        {
+            GameObject gameDataObject = new GameObject("GameData");
+            gameDataObject.AddComponent<GameData>();
+        }
     }
 
     public void SetSeed(int seed)
@@ -173,7 +180,7 @@ public class MainMenuController : MonoBehaviour
                         return;
                     }
 
-                    playerController.transform.position = saveData.playerUniversePosition;
+                    //playerController.transform.position = saveData.playerUniversePosition;
 
                     // Generate new chunks around the player
                     worldGenerator.GenerateChunksAroundPlayer();

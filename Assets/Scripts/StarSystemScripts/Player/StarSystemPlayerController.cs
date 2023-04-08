@@ -4,14 +4,22 @@ using UnityEngine.SceneManagement;
 
 public class StarSystemPlayerController : MonoBehaviour
 {
-    public GameObject selectedPlanet;
-    public float speedAUPerHour = 1f; // Set this to the desired value
-    public float unityUnitsPerAU = 10f; // Set this value to define how many Unity units are in 1 AU
-    private Camera cam;
-    private float timeTakenInHours;
-    private bool isMovingToTarget;
-    private Vector3 targetPosition;
-    public float optimalHours;
+    // Player selection and movement
+    private Camera cam; // Camera component to detect clicks on planets
+    public GameObject selectedPlanet; // The currently selected planet GameObject
+    private bool isMovingToTarget; // Flag to determine if the player is currently moving to the target position
+    private Vector3 targetPosition; // The target position for the player to move to
+
+    // Distance and time calculations
+    public float speedAUPerHour = 1f; // Speed of the player in Astronomical Units (AU) per hour
+    public float unityUnitsPerAU = 10f; // Conversion factor for Unity units to Astronomical Units (AU)
+    private float timeTakenInHours; // Time taken to travel between planets in hours
+    public float optimalHours; // Optimal hours needed to travel to the selected planet
+    public float timeScaleFactor = 3600f; // Time scale factor to convert in-game hours to real-time seconds
+
+    // Tracking distance to target
+    private float originalDistanceToTarget; // Original distance to the target position
+    private float previousDistanceToTarget; // Previous distance to the target position for percentage calculation
 
     private void Awake()
     {
@@ -21,11 +29,12 @@ public class StarSystemPlayerController : MonoBehaviour
     private void Start()
     {
         StartCoroutine(MovePlayerToFarthestPlanetAfterDelay());
+        GameData.Instance.PlayerScenePosition = 2;
     }
 
     private IEnumerator MovePlayerToFarthestPlanetAfterDelay()
     {
-        yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds before moving the player
+        yield return new WaitForSeconds(0.5f);
         MovePlayerToFarthestPlanet();
         InitializeUnityUnitsPerAU();
     }
@@ -48,6 +57,16 @@ public class StarSystemPlayerController : MonoBehaviour
 
     private void Update()
     {
+        ProcessInput();
+
+        if (isMovingToTarget)
+        {
+            MovePlayerToTargetPosition();
+        }
+    }
+
+    private void ProcessInput()
+    {
         if (Input.GetKeyDown(KeyCode.Q))
         {
             ReturnToUniverseView();
@@ -58,113 +77,76 @@ public class StarSystemPlayerController : MonoBehaviour
             CheckForPlanetClick();
         }
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && selectedPlanet != null)
         {
-            if (selectedPlanet != null)
-            {
-                float minHours = 0;
-                float maxHours = 1000;
-                float tolerance = 0.1f;
-
-                while (maxHours - minHours > tolerance)
-                {
-                    float midHours = (minHours + maxHours) / 2;
-
-                    float distancePlayerCanCrossInHours = midHours * speedAUPerHour;
-                    float distanceToPlanetInMidHours = getDistanceToSelectedPlanet(midHours);
-                    float difference = distanceToPlanetInMidHours - distancePlayerCanCrossInHours;
-
-                    if (difference > 0)
-                    {
-                        minHours = midHours;
-                    }
-                    else
-                    {
-                        maxHours = midHours;
-                    }
-                }
-
-                optimalHours = (minHours + maxHours) / 2;
-                Debug.Log("It will take: " + ((int)(optimalHours*100))/100f + " hours");
-                Debug.Log("Will arrive on: " + (optimalHours/24f+GameData.Instance.DaysPassed));
-
-                targetPosition = GetFuturePlanetPosition(optimalHours);
-                StartMovingToTargetPosition();
-            }
+            CalculateOptimalHours();
+            targetPosition = GetFuturePlanetPosition(optimalHours);
+            StartMovingToTargetPosition();
         }
 
-        if (isMovingToTarget)
+        if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus))
         {
-            MovePlayerToTargetPosition();
+            timeScaleFactor = timeScaleFactor * 2f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))
+        {
+            timeScaleFactor = timeScaleFactor * 0.5f;
         }
     }
 
-    // private void FindTargetPosition()
-    // {
-    //     float distanceToPlanet = Vector3.Distance(transform.position, selectedPlanet.transform.position) / unityUnitsPerAU;
-    //     float tolerance = 5f;
-    //     float daysPassed = 0;
+    private void CalculateOptimalHours()
+    {
+        float minHours = 0;
+        float maxHours = 1000;
+        float tolerance = 0.1f;
 
-    //     bool targetFound = false;
-    //     while (!targetFound)
-    //     {
-    //         float timeToPlanet = distanceToPlanet / speedAUPerHour;
-    //         float orbitalPeriodInDays = selectedPlanet.GetComponent<PlanetManager>().planetData.orbitalPeriod * 365.25f;
-    //         float rotationAngle = (timeToPlanet / 24f + daysPassed) / orbitalPeriodInDays * 360f;
+        while (maxHours - minHours > tolerance)
+        {
+            float midHours = (minHours + maxHours) / 2;
 
-    //         Vector3 predictedPosition = RotatePointAroundPivot(selectedPlanet.transform.position, selectedPlanet.transform.parent.position, new Vector3(0, 0, rotationAngle));
-    //         float predictedDistance = Vector3.Distance(transform.position, predictedPosition);
+            float distancePlayerCanCrossInHours = midHours * speedAUPerHour;
+            float distanceToPlanetInMidHours = getDistanceToSelectedPlanet(midHours);
+            float difference = distanceToPlanetInMidHours - distancePlayerCanCrossInHours;
 
-    //         if (Mathf.Abs(predictedDistance - distanceToPlanet) < tolerance)
-    //         {
-    //             targetFound = true;
-    //             timeTakenInHours = timeToPlanet;
-    //             targetPosition = predictedPosition;
-    //             isMovingToTarget = true;
-    //         }
-    //         else
-    //         {
-    //             daysPassed += 1;
-    //         }
-    //     }
-    // }
+            if (difference > 0)
+            {
+                minHours = midHours;
+            }
+            else
+            {
+                maxHours = midHours;
+            }
+        }
+
+        optimalHours = (minHours + maxHours) / 2;
+    }
 
     public float getDistanceToSelectedPlanet(float atTime) //atTime must be in hours
-    {    
-        float planetSMAInAU = selectedPlanet.GetComponent<PlanetManager>().planetData.SMA_AU; //b
-        float playerDistanceFromStarInAU = Vector3.Distance(transform.position, selectedPlanet.transform.position) / unityUnitsPerAU; //c
-        float startingAngleOfPlanet = CalculateAngleBetweenPlayerAndPlanet(); //a
-        float periodOfPlanet = selectedPlanet.GetComponent<PlanetManager>().planetData.orbitalPeriod; //period in years
-        periodOfPlanet = periodOfPlanet * 365.25f * 24f;
+    {
+        float planetSMAInAU = selectedPlanet.GetComponent<PlanetManager>().planetData.SMA_AU;
+        float playerDistanceFromStarInAU = Vector3.Distance(transform.position, selectedPlanet.transform.position) / unityUnitsPerAU;
+        float startingAngleOfPlanet = CalculateAngleBetweenPlayerAndPlanet();
+        float periodOfPlanet = selectedPlanet.GetComponent<PlanetManager>().planetData.orbitalPeriod * 365.25f * 24f;
         periodOfPlanet = 1 / periodOfPlanet;
 
-        float sinPlanetDistance = planetSMAInAU * (Mathf.Sin(periodOfPlanet * (atTime + startingAngleOfPlanet / periodOfPlanet) )) + playerDistanceFromStarInAU;
-
+        float sinPlanetDistance = planetSMAInAU * (Mathf.Sin(periodOfPlanet * (atTime + startingAngleOfPlanet / periodOfPlanet))) + playerDistanceFromStarInAU;
         return sinPlanetDistance;
     }
 
     private float CalculateAngleBetweenPlayerAndPlanet()
     {
-        // Get the position vectors for the player and the planet
         Vector3 playerPosition = transform.position;
         Vector3 planetPosition = selectedPlanet.transform.position;
 
-        // Normalize the position vectors
         Vector3 playerNormalized = playerPosition.normalized;
         Vector3 planetNormalized = planetPosition.normalized;
 
-        // Calculate the dot product between the normalized vectors
         float dotProduct = Vector3.Dot(playerNormalized, planetNormalized);
-
-        // Calculate the angle between the vectors using the dot product (in radians)
         float angle = Mathf.Acos(dotProduct);
 
         return angle;
     }
-
-    public float timeScaleFactor = 3600f; // 1 hour = 1 second
-
-    private float originalDistanceToTarget;
 
     private void StartMovingToTargetPosition()
     {
@@ -172,8 +154,6 @@ public class StarSystemPlayerController : MonoBehaviour
         previousDistanceToTarget = originalDistanceToTarget;
         isMovingToTarget = true;
     }
-
-    private float previousDistanceToTarget;
 
     private void MovePlayerToTargetPosition()
     {
@@ -183,20 +163,14 @@ public class StarSystemPlayerController : MonoBehaviour
 
         if (distanceToTarget > step)
         {
-            // Move the player towards the target position
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, step);
-
             percentageChange = (previousDistanceToTarget - distanceToTarget) / originalDistanceToTarget;
             previousDistanceToTarget = distanceToTarget;
-            // Calculate the remaining distance percentage
-            //float remainingDistancePercentage = distanceToTarget / originalDistanceToTarget;
 
-            // Update GameData.Instance.DaysPassed gradually based on the remaining distance
             GameData.Instance.DaysPassed += percentageChange * (optimalHours / 24f);
         }
         else
         {
-            // Stop moving the player when it reaches the target position
             transform.position = targetPosition;
             isMovingToTarget = false;
         }
@@ -253,30 +227,28 @@ public class StarSystemPlayerController : MonoBehaviour
         if (hit.collider != null && hit.collider.CompareTag("Planet"))
         {
             selectedPlanet = hit.collider.gameObject;
-            Debug.Log("Selected planet: " + selectedPlanet.name);
         }
     }
 
     private void ReturnToUniverseView()
     {
-        Debug.Log("Called return to unvierse view.");
         PlayerController playerController = FindObjectOfType<PlayerController>();
         if (GameData.Instance != null && playerController != null)
         {
-            GameData.Instance.UniversePlayerPosition = playerController.transform.position;
+            GameData.Instance.PlayerPosition = playerController.transform.position;
         }
-        // Call the method to load the UniverseViewScene here
+
         SceneManager.LoadScene("GameScene");
         StartCoroutine(SetPlayerPositionAfterSceneLoad());
     }
 
     private IEnumerator SetPlayerPositionAfterSceneLoad()
     {
-        yield return new WaitForSeconds(0.1f); // Give the scene enough time to load before setting the player's position
+        yield return new WaitForSeconds(0.1f);
         PlayerController playerController = FindObjectOfType<PlayerController>();
-        if (GameData.Instance != null && GameData.Instance.UniversePlayerPosition != Vector3.zero && playerController != null)
+        if (GameData.Instance != null && GameData.Instance.PlayerPosition != Vector3.zero && playerController != null)
         {
-            playerController.SetPlayerPosition(GameData.Instance.UniversePlayerPosition);
+        playerController.SetPlayerPosition(GameData.Instance.PlayerPosition);
         }
     }
 }

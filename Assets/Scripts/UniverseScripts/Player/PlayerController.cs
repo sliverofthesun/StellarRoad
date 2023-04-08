@@ -45,13 +45,13 @@ public class PlayerController : MonoBehaviour
     {
         worldGenerator.OnWorldGenerated += () =>
         {
-            DrawTravelRadiusCircle();
+            DrawTravelRadiusCircles();
 
-            if (GameData.Instance != null && GameData.Instance.UniversePlayerPosition != Vector3.zero)
+            if (GameData.Instance != null && GameData.Instance.PlayerPosition != Vector3.zero)
             {
-                Debug.Log("Loaded player location as: " + GameData.Instance.UniversePlayerPosition);
+                Debug.Log("Loaded player location as: " + GameData.Instance.PlayerPosition);
                 Debug.Log("Player is currently at: " + transform.position);
-                SetPlayerPosition(GameData.Instance.UniversePlayerPosition);
+                SetPlayerPosition(GameData.Instance.PlayerPosition);
             }
             else
             {
@@ -103,7 +103,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E) && !moving)
         {
             StarSystemController starSystemController = GetNearestStarSystem(); // Implement this function to get the nearest StarSystemController
-            GameData.Instance.UniversePlayerPosition = transform.position;
+            GameData.Instance.PlayerPosition = transform.position;
             EnterStarSystem();
         }
 
@@ -115,6 +115,12 @@ public class PlayerController : MonoBehaviour
             // Calculate time taken to travel the distance when initiating the travel
             float actualDistanceInLightYears = distance * GameData.Instance.LightYearsPerUnit;
             timeTakenInDays = actualDistanceInLightYears / GameData.Instance.SpeedInLightYearsPerDay;
+
+                // Add debug logs to print out the values
+    Debug.Log("Distance: " + distance);
+    Debug.Log("Actual Distance in Light Years: " + actualDistanceInLightYears);
+    Debug.Log("Speed in Light Years Per Day: " + GameData.Instance.SpeedInLightYearsPerDay);
+    Debug.Log("Time Taken in Days: " + timeTakenInDays);
         }
         
         if (moving)
@@ -162,21 +168,80 @@ public class PlayerController : MonoBehaviour
         return null;
     }
 
-    private void DrawTravelRadiusCircle()
+    private void DrawTravelRadiusCircles()
     {
         int numSegments = 360;
-        float radius = maxTravelDistance;
-        travelRadiusLineRenderer.positionCount = numSegments + 1;
-        travelRadiusLineRenderer.useWorldSpace = false;
+        int maxDays = (int)(maxTravelDistance*GameData.Instance.LightYearsPerUnit / GameData.Instance.SpeedInLightYearsPerDay);
+        Debug.Log(maxDays);
+
+        // for (int day = 1; day <= maxDays; day++)
+        // {
+        //     LineRenderer lineRenderer = CreateNewLineRendererForRadiusCircle(1f/day);
+        //     float radius = (day / GameData.Instance.LightYearsPerUnit) * GameData.Instance.SpeedInLightYearsPerDay;
+
+        //     lineRenderer.positionCount = numSegments + 1;
+        //     lineRenderer.useWorldSpace = false;
+
+        //     for (int i = 0; i < numSegments + 1; i++)
+        //     {
+        //         float angle = (float)i / (float)numSegments * 360f * Mathf.Deg2Rad;
+        //         float x = radius * Mathf.Cos(angle);
+        //         float y = radius * Mathf.Sin(angle);
+        //         lineRenderer.SetPosition(i, new Vector3(x, y, 0));
+        //     }
+
+        //     travelRadiusLineRenderers.Add(lineRenderer);
+        // }
+
+        LineRenderer lineRenderer2 = CreateNewLineRendererForRadiusCircle(1f);
+        float radius2 = (maxDays / GameData.Instance.LightYearsPerUnit) * GameData.Instance.SpeedInLightYearsPerDay;
+
+        lineRenderer2.positionCount = numSegments + 1;
+        lineRenderer2.useWorldSpace = false;
 
         for (int i = 0; i < numSegments + 1; i++)
         {
             float angle = (float)i / (float)numSegments * 360f * Mathf.Deg2Rad;
-            float x = radius * Mathf.Cos(angle);
-            float y = radius * Mathf.Sin(angle);
-            travelRadiusLineRenderer.SetPosition(i, new Vector3(x, y, 0));
+            float x = radius2 * Mathf.Cos(angle);
+            float y = radius2 * Mathf.Sin(angle);
+            lineRenderer2.SetPosition(i, new Vector3(x, y, 0));
         }
+
+        travelRadiusLineRenderers.Add(lineRenderer2);
+
     }
+
+    private List<LineRenderer> travelRadiusLineRenderers = new List<LineRenderer>();
+
+private LineRenderer CreateNewLineRendererForRadiusCircle(float a = 1f)
+{
+    GameObject circle = new GameObject("TravelRadiusCircle");
+    circle.transform.SetParent(transform);
+    circle.transform.localPosition = Vector3.zero;
+
+    LineRenderer lineRenderer = circle.AddComponent<LineRenderer>();
+
+    // Create a new material using the Unlit/Color shader and set the color
+    Material unlitMaterial = new Material(Shader.Find("Unlit/Color"));
+    Color colorWithAlpha = travelRadiusLineRenderer.startColor;
+    colorWithAlpha.a = a;
+    unlitMaterial.SetColor("_Color", colorWithAlpha);
+
+    lineRenderer.material = unlitMaterial;
+    lineRenderer.startWidth = travelRadiusLineRenderer.startWidth;
+    lineRenderer.endWidth = travelRadiusLineRenderer.endWidth;
+
+    Color startColorWithAlpha = travelRadiusLineRenderer.startColor;
+    startColorWithAlpha.a = a;
+    lineRenderer.startColor = startColorWithAlpha;
+
+    Color endColorWithAlpha = travelRadiusLineRenderer.endColor;
+    endColorWithAlpha.a = a;
+    lineRenderer.endColor = endColorWithAlpha;
+
+    return lineRenderer;
+}
+
 
     public void PlacePlayerAtClosestStar()
     {
@@ -240,7 +305,10 @@ public class PlayerController : MonoBehaviour
                 GameData.Instance.CurrentStarSystemController = starSystemController;
 
                 // Add the time taken to travel to DaysPassed
+                Debug.Log("Gamedata days passed before adding travel time: " + GameData.Instance.DaysPassed);
                 GameData.Instance.DaysPassed += timeTakenInDays;
+                Debug.Log("and after: " + GameData.Instance.DaysPassed);
+
             }
             else
             {
@@ -370,7 +438,7 @@ public class PlayerController : MonoBehaviour
             {
                 CurrentStar = star; // Set the CurrentStar property here
                 _currentStarInEditor = star; // Set the value for the Inspector
-                GameData.Instance.UniversePlayerPosition = transform.position;
+                GameData.Instance.PlayerPosition = transform.position;
                 GameData.Instance.SystemSeed = starSystemController.StarSystemSeed;
                 GameData.Instance.StarMass = starSystemController.StarMass;
                 GameData.Instance.StarSize = starSystemController.starSize;
