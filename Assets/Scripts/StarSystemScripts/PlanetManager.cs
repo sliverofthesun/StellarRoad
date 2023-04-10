@@ -47,7 +47,8 @@ public class PlanetManager : MonoBehaviour
         UpdatePlanetDensity();
         CalculateGravity();
         CalculatePeriod();
-        //GenerateAtmosphere();
+        GenerateAtmosphere(); //Need to improve this to take into account the temperature and atmo height
+        CalculateAtmosphericHeight(); //Maybe improve this later. Currently assuming 64% eq_temperature at karman line
         UpdateOrbitColor();
         DisplayPlanetComposition();
 
@@ -126,8 +127,85 @@ public class PlanetManager : MonoBehaviour
 
     private void GenerateAtmosphere()
     {
+        System.Random random = new System.Random(planetData.PlanetSeed);
+
+        float surfacePressure = 0f;
+        planetData.hasAtmosphere = false;
+
+        // Initialize the atmoComposition object
+        planetData.atmoComposition = new AtmosphereComposition();
+
+        float massAtmoOdds = Mathf.Log(planetData.mass + 1f, 2f)/2f;
+        float temperatureAtmoOdds = 1f/(1000f/planetData.eq_temperature);
+        float oddsOfAnAtmo = massAtmoOdds - temperatureAtmoOdds;
+
+        if (planetData.composition.percentageOfGases > 0)
+        {
+            float massOfAtmosphere = planetData.composition.percentageOfGases * planetData.mass; // Adjust the factor for gas composition
+            surfacePressure = 0f;
+
+            planetData.hasAtmosphere = true;
+            planetData.atmoComposition.surfacePressure = surfacePressure;
+        }
+        else if(Random.value < oddsOfAnAtmo)
+        {
+            // Calculate mean atmospheric pressure based on the planet's mass
+            float meanPressure = planetData.mass;
+
+            // Generate atmospheric pressure using Gaussian distribution
+            float standardDeviation = meanPressure * 0.5f; // Adjust the standard deviation
+            float minimumPressure = 0f;
+            float maximumPressure = Mathf.Infinity;
+
+            surfacePressure = randomValueBasedONGauss(meanPressure, standardDeviation, minimumPressure, maximumPressure);
+
+            planetData.hasAtmosphere = surfacePressure > 0.0001f;
+            planetData.atmoComposition.surfacePressure = surfacePressure;
+        }
+
+        GenerateGreenhouseEffect();
+        GenerateMolMassOfAtmo();
 
     }
+
+    private void GenerateGreenhouseEffect()
+    {
+        if(planetData.hasAtmosphere)
+        {
+            if(planetData.atmoComposition.surfacePressure < 0.8136f)
+            {
+                planetData.atmoComposition.greenhouse_effect = 0.78f*Mathf.Pow(planetData.atmoComposition.surfacePressure, 2f);
+            }
+            else if(planetData.atmoComposition.surfacePressure < 104.24f)
+            {
+                planetData.atmoComposition.greenhouse_effect = 1.372065f*planetData.atmoComposition.surfacePressure-0.6f;
+            }
+            else
+            {
+                planetData.atmoComposition.greenhouse_effect = Mathf.Log((planetData.atmoComposition.surfacePressure-90f), 1.052f)+90f;
+            }
+
+            planetData.surface_temperature = planetData.eq_temperature * Mathf.Pow(1 + planetData.atmoComposition.greenhouse_effect, 0.25f);
+        }
+        else
+        {
+            planetData.surface_temperature = planetData.eq_temperature;
+        }
+    }
+
+    private void GenerateMolMassOfAtmo()
+    {
+        planetData.atmoComposition.molMass = randomValueBasedONGauss(0.028964f*(1+Mathf.Log(planetData.atmoComposition.surfacePressure,20)), 0.028964f*(1+Mathf.Log(planetData.atmoComposition.surfacePressure,20)) * 0.5f, 0.001f, Mathf.Infinity);
+    }
+
+    private void CalculateAtmosphericHeight()
+    {
+        float h0 = planetData.atmoComposition.surfacePressure;
+        float R = 8.314f;
+        planetData.atmoComposition.atmoHeight = ((-1f * Mathf.Log((4.9e-7f/h0), 10f)) * R * 0.646f*planetData.eq_temperature)/(Mathf.Log(2.71828f, 10f)*planetData.surfaceGravity * planetData.atmoComposition.molMass);
+        planetData.atmoComposition.atmoHeight = planetData.atmoComposition.atmoHeight / 1000f; //convert to km
+    }
+
     private void CalculateGravity()
     {
         float G = 6.674e-11f;
@@ -310,9 +388,9 @@ public class PlanetManager : MonoBehaviour
         // Calculate the lerp factor and interpolate between the start and end colors
         foreach (ColorRange colorRange in colorRanges)
         {
-            if (planetData.temperature_K < colorRange.upperTemperature)
+            if (planetData.surface_temperature < colorRange.upperTemperature)
             {
-                float lerpFactor = Mathf.InverseLerp(colorRange.lowerTemperature, colorRange.upperTemperature, planetData.temperature_K);
+                float lerpFactor = Mathf.InverseLerp(colorRange.lowerTemperature, colorRange.upperTemperature, planetData.eq_temperature);
                 return Color.Lerp(colorRange.startColor, colorRange.endColor, lerpFactor);
             }
         }

@@ -346,7 +346,7 @@ public class StarSystemManager : MonoBehaviour
             {
                 orderInSystem = i+1,
                 SMA_AU = distance,
-                temperature_K = AUToKelvin(distance),
+                eq_temperature = AUToKelvin(distance),
                 hasAtmosphere = true,
                 mass = massLine[i],
                 trueAnomaly = Random.value,
