@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/StarSystemScene.unity
     guid: ed70ddfb005086d48be8db6aa8a0b97c
+  - enabled: 1
+    path: Assets/Scenes/ObjectScene.unity
+    guid: 54c83d4361b742b4584c5637dfe04421
   m_configObjects: {}

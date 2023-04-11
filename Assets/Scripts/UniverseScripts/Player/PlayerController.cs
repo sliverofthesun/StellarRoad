@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour
             if (GameData.Instance != null && GameData.Instance.PlayerPosition != Vector3.zero)
             {
                 Debug.Log("Loaded player location as: " + GameData.Instance.PlayerPosition);
-                Debug.Log("Player is currently at: " + transform.position);
+                //Debug.Log("Player is currently at: " + transform.position);
                 SetPlayerPosition(GameData.Instance.PlayerPosition);
             }
             else
@@ -77,7 +77,8 @@ public class PlayerController : MonoBehaviour
 
             if (hit.collider != null && hit.collider.CompareTag("Star"))
             {
-                float distance = Vector3.Distance(transform.position, hit.collider.transform.position);
+                float distance = Vector3.Distance(transform.position, hit.collider.transform.position)*GameData.Instance.LightYearsPerUnit;
+
                 if (distance <= maxTravelDistance)
                 {
                     if (!moving)
@@ -115,12 +116,6 @@ public class PlayerController : MonoBehaviour
             // Calculate time taken to travel the distance when initiating the travel
             float actualDistanceInLightYears = distance * GameData.Instance.LightYearsPerUnit;
             timeTakenInDays = actualDistanceInLightYears / GameData.Instance.SpeedInLightYearsPerDay;
-
-                // Add debug logs to print out the values
-    Debug.Log("Distance: " + distance);
-    Debug.Log("Actual Distance in Light Years: " + actualDistanceInLightYears);
-    Debug.Log("Speed in Light Years Per Day: " + GameData.Instance.SpeedInLightYearsPerDay);
-    Debug.Log("Time Taken in Days: " + timeTakenInDays);
         }
         
         if (moving)
@@ -172,29 +167,9 @@ public class PlayerController : MonoBehaviour
     {
         int numSegments = 360;
         int maxDays = (int)(maxTravelDistance*GameData.Instance.LightYearsPerUnit / GameData.Instance.SpeedInLightYearsPerDay);
-        Debug.Log(maxDays);
-
-        // for (int day = 1; day <= maxDays; day++)
-        // {
-        //     LineRenderer lineRenderer = CreateNewLineRendererForRadiusCircle(1f/day);
-        //     float radius = (day / GameData.Instance.LightYearsPerUnit) * GameData.Instance.SpeedInLightYearsPerDay;
-
-        //     lineRenderer.positionCount = numSegments + 1;
-        //     lineRenderer.useWorldSpace = false;
-
-        //     for (int i = 0; i < numSegments + 1; i++)
-        //     {
-        //         float angle = (float)i / (float)numSegments * 360f * Mathf.Deg2Rad;
-        //         float x = radius * Mathf.Cos(angle);
-        //         float y = radius * Mathf.Sin(angle);
-        //         lineRenderer.SetPosition(i, new Vector3(x, y, 0));
-        //     }
-
-        //     travelRadiusLineRenderers.Add(lineRenderer);
-        // }
-
+        
         LineRenderer lineRenderer2 = CreateNewLineRendererForRadiusCircle(1f);
-        float radius2 = (maxDays / GameData.Instance.LightYearsPerUnit) * GameData.Instance.SpeedInLightYearsPerDay;
+        float radius2 = maxTravelDistance / GameData.Instance.SpeedInLightYearsPerDay * 2f;
 
         lineRenderer2.positionCount = numSegments + 1;
         lineRenderer2.useWorldSpace = false;
@@ -301,14 +276,10 @@ private LineRenderer CreateNewLineRendererForRadiusCircle(float a = 1f)
 
             if (starSystemController != null)
             {
-                Debug.Log("Reached star");
                 GameData.Instance.CurrentStarSystemController = starSystemController;
 
                 // Add the time taken to travel to DaysPassed
-                Debug.Log("Gamedata days passed before adding travel time: " + GameData.Instance.DaysPassed);
                 GameData.Instance.DaysPassed += timeTakenInDays;
-                Debug.Log("and after: " + GameData.Instance.DaysPassed);
-
             }
             else
             {
@@ -320,8 +291,8 @@ private LineRenderer CreateNewLineRendererForRadiusCircle(float a = 1f)
             // Check if the next target star is still within the travel radius
             if (nextTargetStar != null)
             {
-                float nextTargetDistance = Vector3.Distance(transform.position, nextTargetStar.transform.position);
-                if (nextTargetDistance <= maxTravelDistance)
+                float nextTargetDistance = Vector3.Distance(transform.position, nextTargetStar.transform.position)/GameData.Instance.LightYearsPerUnit;
+                if (nextTargetDistance <= maxTravelDistance/GameData.Instance.LightYearsPerUnit)
                 {
                     targetStar = nextTargetStar;
                     DrawLineToTarget();

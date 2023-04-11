@@ -1,4 +1,5 @@
 using UnityEngine;
+using PlanetDataNamespace;
 using UnityEngine.SceneManagement;
 
 // In GameData.cs
@@ -11,6 +12,10 @@ public class GameData : MonoBehaviour
     [SerializeField]
     private StarSystem _currentStarSystem;
     public StarSystem CurrentStarSystem { get => _currentStarSystem; set => _currentStarSystem = value; }
+
+    [SerializeField]
+    private Planet _currentPlanet;
+    public Planet CurrentPlanet { get => _currentPlanet; set => _currentPlanet = value; }
 
     [SerializeField]
     private StarSystemController _currentStarSystemController;
@@ -79,9 +84,6 @@ public class GameData : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
-        // Add a debug log to confirm that the GameData instance is initialized
-        Debug.Log("GameData instance initialized");
     }
 
     // Add a new method to create a SaveData instance from the current GameData instance

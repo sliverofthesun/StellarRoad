@@ -152,8 +152,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d300424745d4a14a9d8481c14f74d06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _currentPlanet:
+    orderInSystem: 0
+    compositionDescriptor: 
+    planetType: 
+    mass: 0
+    radius: 0
+    density: 0
+    surfaceGravity: 0
+    escapeVelocity: 0
+    nOfSatellites: 0
+    SMA_AU: 0
+    orbitalPeriod: 0
+    eq_temperature: 0
+    surface_temperature: 0
+    hasAtmosphere: 0
+    trueAnomaly: 0
+    composition:
+      percentageOfGases: 0
+      percentageOfLiquids: 0
+      percentageOfSilicates: 0
+      percentageOfMetals: 0
+    atmoComposition:
+      greenhouse_effect: 0
+      surfacePressure: 0
+      molMass: 0
+      atmoHeight: 0
+    PlanetSeed: 0
   _currentStarSystemController: {fileID: 0}
-  _universePlayerPosition: {x: 0, y: 0, z: 0}
+  _playerPosition: {x: 0, y: 0, z: 0}
   _cameraPosition: {x: 0, y: 0, z: 0}
   _universeSeed: 0
   _systemSeed: 0

@@ -131,10 +131,6 @@ public class WorldGenerator : MonoBehaviour
 
             // Generate a unique seed for the star system
             int starSystemSeed = HashSeed(seed, chunkCoords, i);
-            if(Mathf.Abs(position.y) < 1f && Mathf.Abs(position.x) < 1f)
-            {
-                Debug.Log("Star at:" + position.x + " , " + position.y + " has seed: " + starSystemSeed);
-            }
 
             // Generate a random star mass based on the star class
             float starMass = (float)chunkRandom.NextDouble() * (starClass.maxStarMass - starClass.minStarMass) + starClass.minStarMass;

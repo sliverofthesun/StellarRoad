@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using PlanetDataNamespace;
 using UnityEngine.SceneManagement;
 
 public class StarSystemPlayerController : MonoBehaviour
@@ -93,6 +94,12 @@ public class StarSystemPlayerController : MonoBehaviour
         {
             timeScaleFactor = timeScaleFactor * 0.5f;
         }
+
+        //Add this block inside the ProcessInput() method
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            EnterPlanetSystem();
+        }
     }
 
     private void CalculateOptimalHours()
@@ -172,6 +179,7 @@ public class StarSystemPlayerController : MonoBehaviour
         else
         {
             transform.position = targetPosition;
+            GameData.Instance.CurrentPlanet = selectedPlanet.GetComponent<PlanetManager>().planetData;
             isMovingToTarget = false;
         }
     }
@@ -217,6 +225,8 @@ public class StarSystemPlayerController : MonoBehaviour
         {
             transform.position = farthestPlanet.transform.position;
         }
+
+        GameData.Instance.CurrentPlanet = farthestPlanet.planetData;
     }
 
     private void CheckForPlanetClick()
@@ -240,6 +250,11 @@ public class StarSystemPlayerController : MonoBehaviour
 
         SceneManager.LoadScene("GameScene");
         StartCoroutine(SetPlayerPositionAfterSceneLoad());
+    }
+
+    private void EnterPlanetSystem()
+    {
+        SceneManager.LoadScene(3);
     }
 
     private IEnumerator SetPlayerPositionAfterSceneLoad()

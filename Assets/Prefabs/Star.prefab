@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7810984857498807362}
   - component: {fileID: -1257723138634736825}
   - component: {fileID: 5797061380570467678}
+  - component: {fileID: -6432073426960869105}
   m_Layer: 0
   m_Name: Star
   m_TagString: Star
@@ -30,8 +31,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 8904670589814958184}
+  m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -129,63 +129,23 @@ MonoBehaviour:
   StarMass: 0
   StarLuminosity: 0
   starVariability: 4
-  glowEffectPrefab: {fileID: 7555249717893988715, guid: f05043716eb6ce94184d8242a93d4300, type: 3}
+  starSize: 0
+  starColor: {r: 0, g: 0, b: 0, a: 0}
   StarSystemSeed: 0
   NumberOfPlanets: 0
-  spriteRenderer: {fileID: 0}
-  oscillationPercentage: 0.1
-  oscillationSpeed: 0.6
-  variationPercentage: 0.5
-  uniqueOscillationPercentage: 0
-  uniqueOscillationSpeed: 0
-  minGlowSize: 0.5
-  maxGlowSize: 1.25
-  minGlowOpacity: 0.3
-  maxLuminosity: 5
---- !u!1 &5317068084954659404
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8904670589814958184}
-  - component: {fileID: 7687665818505977812}
-  m_Layer: 0
-  m_Name: Rays
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8904670589814958184
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5317068084954659404}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4786860435894709917}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7687665818505977812
+  glowEffectPrefab: {fileID: 7555249717893988715, guid: f05043716eb6ce94184d8242a93d4300, type: 3}
+--- !u!114 &-6432073426960869105
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5317068084954659404}
+  m_GameObject: {fileID: 4193151102928341145}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 770c6af107ee3a6459859b831c51c41c, type: 3}
+  m_Script: {fileID: 11500000, guid: dd139c032ff527c4595b73dbb32f561c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxLength: 2
-  fattnessFactor: 1
-  transparentMaterial: {fileID: 2100000, guid: 685f9b6e2ad13554ba06212bd54086d5, type: 2}
+  circleSegmentsPerPlanet: 2
+  circleMaterial: {fileID: 2100000, guid: 6450a018d602eba4f94a310cb9d0ce49, type: 2}
+  planetCircleRadius: 0.1

@@ -13,12 +13,12 @@ public class PlanetManager : MonoBehaviour
 
     public Camera cam;
 
-    public float massMarkerLineWidth;
+    public float MarkerLineWidth;
     public float massMarkerLogBase;
     public float distanceOfMarkerFromPlanet;
     public float baseLogMilestoneLen;
     public float scalingOfMassMarkersLen;
-    public Material massMarkerMaterial;
+    public Material MarkerMaterial;
     
     public Color coldColor;
     public Color goldilocksLowerColor;
@@ -51,6 +51,13 @@ public class PlanetManager : MonoBehaviour
         CalculateAtmosphericHeight(); //Maybe improve this later. Currently assuming 64% eq_temperature at karman line
         UpdateOrbitColor();
         DisplayPlanetComposition();
+        DisplayAtmoPressure();
+        GenerateNOfSatellites();
+
+        if(planetData.nOfSatellites > 0)
+        {
+            DrawMoons();
+        }
 
         // Create mass and radius markers
         CreateMarkers(planetData.mass, planetData.radius);
@@ -122,6 +129,56 @@ public class PlanetManager : MonoBehaviour
         if (collider != null && colliderScaleFactor >= 1f)
         {
             collider.radius = colliderScaleFactor;
+        }
+    }
+
+    private void GenerateNOfSatellites()
+    {
+        System.Random random = new System.Random(planetData.PlanetSeed);
+
+        float oddsOfSatellites = Mathf.Log(planetData.SMA_AU + 1, 200f) + 0.2f * planetData.mass;
+        float satelliteOdds = (float)random.NextDouble();
+
+        if (satelliteOdds <= oddsOfSatellites)
+        {
+            float mean = 0.5f * Mathf.Log(planetData.SMA_AU + 1, 2f) + 0.2f * planetData.mass;
+            float standardDeviation = mean * 0.25f;
+            float minimumValue = 0f;
+            float maximumValue = mean * 3f;
+
+            float satelliteCount = randomValueBasedONGauss(mean, standardDeviation, minimumValue, maximumValue);
+            int roundedSatelliteCount = Mathf.RoundToInt(satelliteCount);
+
+            planetData.nOfSatellites = roundedSatelliteCount;
+        }
+        else
+        {
+            planetData.nOfSatellites = 0;
+        }
+    }
+
+    public GameObject moonPrefab;
+
+    private void DrawMoons()
+    {
+        int numberOfMoons = planetData.nOfSatellites;
+        float moonDistanceFromPlanet = 0.14f;
+        float moonRadius = 0.0025f;
+
+        GameObject moonParent = new GameObject("MoonParent");
+        moonParent.transform.SetParent(transform);
+        moonParent.transform.localPosition = Vector3.zero;
+
+        for (int i = 0; i < numberOfMoons; i++)
+        {
+            float angle = 2 * Mathf.PI * i / numberOfMoons;
+            float x = moonDistanceFromPlanet * Mathf.Cos(angle);
+            float y = moonDistanceFromPlanet * Mathf.Sin(angle);
+
+            Vector3 position = new Vector3(x, y, 0);
+            GameObject moon = Instantiate(moonPrefab, moonParent.transform);
+            moon.transform.localScale = new Vector3(moonRadius, moonRadius, moonRadius);
+            moon.transform.localPosition = position;
         }
     }
 
@@ -206,6 +263,11 @@ public class PlanetManager : MonoBehaviour
         planetData.atmoComposition.atmoHeight = planetData.atmoComposition.atmoHeight / 1000f; //convert to km
     }
 
+    private void DisplayAtmoPressure()
+    {
+        
+    }
+    
     private void CalculateGravity()
     {
         float G = 6.674e-11f;
@@ -286,9 +348,9 @@ public class PlanetManager : MonoBehaviour
         marker.transform.SetParent(transform, true);
 
         LineRenderer lineRenderer = marker.AddComponent<LineRenderer>();
-        lineRenderer.material = massMarkerMaterial;
-        lineRenderer.startWidth = massMarkerLineWidth;
-        lineRenderer.endWidth = massMarkerLineWidth;
+        lineRenderer.material = MarkerMaterial;
+        lineRenderer.startWidth = MarkerLineWidth;
+        lineRenderer.endWidth = MarkerLineWidth;
 
         float lineLength = Mathf.Log(value * 10f, massMarkerLogBase) * scalingOfMassMarkersLen;
         lineLength = Mathf.Abs(lineLength);
@@ -315,9 +377,9 @@ public class PlanetManager : MonoBehaviour
         milestoneMarker.transform.SetParent(transform, true);
 
         LineRenderer milestoneLineRenderer = milestoneMarker.AddComponent<LineRenderer>();
-        milestoneLineRenderer.material = massMarkerMaterial;
-        milestoneLineRenderer.startWidth = massMarkerLineWidth;
-        milestoneLineRenderer.endWidth = massMarkerLineWidth;
+        milestoneLineRenderer.material = MarkerMaterial;
+        milestoneLineRenderer.startWidth = MarkerLineWidth;
+        milestoneLineRenderer.endWidth = MarkerLineWidth;
 
         Vector3 startPosition;
         Vector3 endPosition;
@@ -538,7 +600,7 @@ public class PlanetManager : MonoBehaviour
     private float CalculateGasGiantOdds(float temperature, float planetMass)
     {
         float baseOdds = temperature > 340f ? 0.05f : 0.1f * ((temperature - 340f) / 50f + 1f);
-        return baseOdds * (planetMass / 3f);
+        return baseOdds * (planetMass / 1.2f);
     }
 
     private float CalculateWaterOdds(float temperature)

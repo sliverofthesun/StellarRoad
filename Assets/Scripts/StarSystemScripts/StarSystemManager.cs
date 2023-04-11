@@ -258,7 +258,7 @@ public class StarSystemManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Shader found!");
+            //Debug.Log("Shader found!");
             lineRenderer.material = new Material(shader);
         }
 
@@ -310,16 +310,16 @@ public class StarSystemManager : MonoBehaviour
     public void GenerateBlaggFormulation()
     {
         distanceSeed = randomValueBasedONGauss(1.8275f, 0.125f, 1.2f, 100000f); //how much farther away are the planets from their neighbours
-        Debug.Log("Distance factor is: " + distanceSeed);
+        //Debug.Log("Distance factor is: " + distanceSeed);
 
         distanceSeedStandardDiv = Mathf.Abs(randomValueBasedONGauss(0f,10f,-1000f, 100000f)/100f); //this is a percentage deviation from distance seed
-        Debug.Log("Distance variance standard div is: " + distanceSeedStandardDiv);
+        //Debug.Log("Distance variance standard div is: " + distanceSeedStandardDiv);
 
         //Calculating the innermost orbit using trappist one and solar system as raff guideline
         firstOrbit = randomValueBasedONGauss(45f, 25f, 5f, 100000f); //this is in solar radii
         firstOrbit = (firstOrbit * starSize) / 215f; // dividing by 215 bcuz 1 AU =  215 solar radi
 
-        Debug.Log("First orbit is: " + firstOrbit);
+        //Debug.Log("First orbit is: " + firstOrbit);
     }
 
     public void GeneratePlanets()
@@ -376,6 +376,17 @@ public class StarSystemManager : MonoBehaviour
             PlanetManager planetManager = newPlanet.GetComponent<PlanetManager>();
             planetManager.SetPlanetData(planet);
             planetManager.SetStarData(starLuminosity, starMass, starSize);
+
+            // Name the planet in the hierarchy
+            int planetNumber = i + 1;
+            string planetSuffix = "th";
+            switch (planetNumber)
+            {
+                case 1: planetSuffix = "st"; break;
+                case 2: planetSuffix = "nd"; break;
+                case 3: planetSuffix = "rd"; break;
+            }
+            newPlanet.name = planetNumber.ToString() + planetSuffix + " Planet";
         }
     }
 

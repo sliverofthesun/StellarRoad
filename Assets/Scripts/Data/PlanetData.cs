@@ -13,6 +13,7 @@ namespace PlanetDataNamespace
         public float density; //in kg/m3
         public float surfaceGravity; //in m/s2
         public float escapeVelocity; //in m/s
+        public int nOfSatellites; //in m/s
         public float SMA_AU; //in AU
         public float orbitalPeriod; //in years
         public float eq_temperature; //in Kelvin
