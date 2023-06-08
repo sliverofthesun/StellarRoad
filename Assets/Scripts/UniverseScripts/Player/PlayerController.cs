@@ -47,11 +47,11 @@ public class PlayerController : MonoBehaviour
         {
             DrawTravelRadiusCircles();
 
-            if (GameData.Instance != null && GameData.Instance.PlayerPosition != Vector3.zero)
+            if (GameData.Instance != null && GameData.Instance.PlayerPositionInUniverse != Vector3.zero)
             {
-                Debug.Log("Loaded player location as: " + GameData.Instance.PlayerPosition);
+                Debug.Log("Loaded player location as: " + GameData.Instance.PlayerPositionInUniverse);
                 //Debug.Log("Player is currently at: " + transform.position);
-                SetPlayerPosition(GameData.Instance.PlayerPosition);
+                SetPlayerPosition(GameData.Instance.PlayerPositionInUniverse);
             }
             else
             {
@@ -104,7 +104,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E) && !moving)
         {
             StarSystemController starSystemController = GetNearestStarSystem(); // Implement this function to get the nearest StarSystemController
-            GameData.Instance.PlayerPosition = transform.position;
+            GameData.Instance.PlayerPositionInUniverse = transform.position;
             EnterStarSystem();
         }
 
@@ -409,7 +409,7 @@ private LineRenderer CreateNewLineRendererForRadiusCircle(float a = 1f)
             {
                 CurrentStar = star; // Set the CurrentStar property here
                 _currentStarInEditor = star; // Set the value for the Inspector
-                GameData.Instance.PlayerPosition = transform.position;
+                GameData.Instance.PlayerPositionInUniverse = transform.position;
                 GameData.Instance.SystemSeed = starSystemController.StarSystemSeed;
                 GameData.Instance.StarMass = starSystemController.StarMass;
                 GameData.Instance.StarSize = starSystemController.starSize;

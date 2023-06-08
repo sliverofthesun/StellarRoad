@@ -355,6 +355,11 @@ public class PlanetManager : MonoBehaviour
         float lineLength = Mathf.Log(value * 10f, massMarkerLogBase) * scalingOfMassMarkersLen;
         lineLength = Mathf.Abs(lineLength);
 
+        if(planetData.nOfSatellites == 0)
+        {
+            distanceOfMarkerFromPlanet = 0.14f;
+        }
+
         Vector3 startPosition = transform.position + direction * distanceOfMarkerFromPlanet;
         Vector3 endPosition = startPosition + direction * lineLength;
 

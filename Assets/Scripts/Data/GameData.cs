@@ -10,6 +10,10 @@ public class GameData : MonoBehaviour
     public static GameData Instance;
 
     [SerializeField]
+    private bool _gameLoaded;
+    public bool GameLoaded { get => _gameLoaded; set => _gameLoaded = value; }
+
+    [SerializeField]
     private StarSystem _currentStarSystem;
     public StarSystem CurrentStarSystem { get => _currentStarSystem; set => _currentStarSystem = value; }
 
@@ -22,8 +26,12 @@ public class GameData : MonoBehaviour
     public StarSystemController CurrentStarSystemController { get => _currentStarSystemController; set => _currentStarSystemController = value; }
 
     [SerializeField]
-    private Vector3 _playerPosition;
-    public Vector3 PlayerPosition { get => _playerPosition; set => _playerPosition = value; }
+    private Vector3 _playerPositionInUniverse;
+    public Vector3 PlayerPositionInUniverse { get => _playerPositionInUniverse; set => _playerPositionInUniverse = value; }
+    
+    [SerializeField]
+    private Vector3 _playerPositionInStarSystem;
+    public Vector3 PlayerPositionInStarSystem { get => _playerPositionInStarSystem; set => _playerPositionInStarSystem = value; }
 
     [SerializeField]
     private Vector3 _cameraPosition;
@@ -36,6 +44,10 @@ public class GameData : MonoBehaviour
     [SerializeField]
     private int _systemSeed;
     public int SystemSeed { get => _systemSeed; set => _systemSeed = value; }
+
+    [SerializeField]
+    private Planet _planet;
+    public Planet Planet { get => _planet; set => _planet = value; }
 
     [SerializeField]
     private Color _starColor;
@@ -94,7 +106,10 @@ public class GameData : MonoBehaviour
         SaveData saveData = new SaveData
         {
             playerScenePosition = currentSceneIndex,
-            playerPosition = PlayerPosition,
+            playerPositionInUniverse = PlayerPositionInUniverse,
+            playerPositionInStarSystem = PlayerPositionInStarSystem,
+            //planet = Planet,
+            currentPlanet = CurrentPlanet,
             daysPassed = DaysPassed,
             cameraPosition = CameraPosition,
             universeSeed = UniverseSeed,
@@ -113,7 +128,10 @@ public class GameData : MonoBehaviour
     public void FromSaveData(SaveData saveData)
     {
         PlayerScenePosition = saveData.playerScenePosition;
-        PlayerPosition = saveData.playerPosition;
+        PlayerPositionInUniverse = saveData.playerPositionInUniverse;
+        PlayerPositionInStarSystem = saveData.playerPositionInStarSystem;
+        //Planet = saveData.planet;
+        CurrentPlanet = saveData.currentPlanet;
         DaysPassed = saveData.daysPassed;
         CameraPosition = saveData.cameraPosition;
         UniverseSeed = saveData.universeSeed;

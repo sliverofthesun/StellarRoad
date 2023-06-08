@@ -29,7 +29,17 @@ public class StarSystemPlayerController : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(MovePlayerToFarthestPlanetAfterDelay());
+        if (GameData.Instance.GameLoaded)
+        {
+            Debug.Log("Game Loaded");
+            StartCoroutine(SetPlayerPositionAfterSceneLoad());
+        }
+        else if (!GameData.Instance.GameLoaded)
+        {
+            Debug.Log("== 1");
+            StartCoroutine(MovePlayerToFarthestPlanetAfterDelay());
+        }
+
         GameData.Instance.PlayerScenePosition = 2;
     }
 
@@ -64,6 +74,12 @@ public class StarSystemPlayerController : MonoBehaviour
         {
             MovePlayerToTargetPosition();
         }
+
+    }
+
+    private void RecordPlayerState()
+    {
+        GameData.Instance.PlayerPositionInStarSystem = transform.position;
     }
 
     private void ProcessInput()
@@ -98,6 +114,7 @@ public class StarSystemPlayerController : MonoBehaviour
         //Add this block inside the ProcessInput() method
         if (Input.GetKeyDown(KeyCode.E))
         {
+            RecordPlayerState();
             EnterPlanetSystem();
         }
     }
@@ -181,6 +198,7 @@ public class StarSystemPlayerController : MonoBehaviour
             transform.position = targetPosition;
             GameData.Instance.CurrentPlanet = selectedPlanet.GetComponent<PlanetManager>().planetData;
             isMovingToTarget = false;
+            RecordPlayerState();
         }
     }
 
@@ -245,7 +263,7 @@ public class StarSystemPlayerController : MonoBehaviour
         PlayerController playerController = FindObjectOfType<PlayerController>();
         if (GameData.Instance != null && playerController != null)
         {
-            GameData.Instance.PlayerPosition = playerController.transform.position;
+            GameData.Instance.PlayerPositionInUniverse = playerController.transform.position;
         }
 
         SceneManager.LoadScene("GameScene");
@@ -254,16 +272,36 @@ public class StarSystemPlayerController : MonoBehaviour
 
     private void EnterPlanetSystem()
     {
+        GameData.Instance.PlayerScenePosition = 3;
         SceneManager.LoadScene(3);
+        //StartCoroutine(SetPlayerPositionAfterSceneLoad());
+    }
+
+    public void MovePlayerToGameDataPlanet()
+    {
+        int targetOrderInSystem = GameData.Instance.CurrentPlanet.orderInSystem;
+
+        Debug.Log("Called move player to gamedata planet. Planet: " + targetOrderInSystem);
+        GameObject[] planets = GameObject.FindGameObjectsWithTag("Planet");
+
+        foreach (GameObject planet in planets)
+        {
+            PlanetManager planetManager = planet.GetComponent<PlanetManager>();
+            if (planetManager.planetData.orderInSystem == targetOrderInSystem)
+            {   
+                transform.position = planet.transform.position;
+                Debug.Log("Found planet at: " + planet.transform.position);
+                break;
+            }
+        }
     }
 
     private IEnumerator SetPlayerPositionAfterSceneLoad()
     {
+        Debug.Log("AAAAAAAAAAAAAAAA");
         yield return new WaitForSeconds(0.1f);
-        PlayerController playerController = FindObjectOfType<PlayerController>();
-        if (GameData.Instance != null && GameData.Instance.PlayerPosition != Vector3.zero && playerController != null)
-        {
-        playerController.SetPlayerPosition(GameData.Instance.PlayerPosition);
-        }
+        Debug.Log("AAAAAAAAAAAAAAAA 2");
+
+        MovePlayerToGameDataPlanet();
     }
 }

@@ -95,7 +95,7 @@ public class PauseMenuController : MonoBehaviour
         {
             string json = File.ReadAllText(saveFilePath);
             SaveData saveData = JsonUtility.FromJson<SaveData>(json);
-
+        Debug.Log(saveData.playerPositionInStarSystem);
             if (GameData.Instance == null)
             {
                 GameObject gameDataObject = new GameObject("GameData");
@@ -104,9 +104,11 @@ public class PauseMenuController : MonoBehaviour
             }
 
             // Set the entire GameData instance to the loaded data
+            Debug.Log("Star system position is: " + GameData.Instance.PlayerPositionInStarSystem);
             GameData.Instance.FromSaveData(saveData);
 
             Debug.Log("Game loaded from: " + saveFilePath);
+            GameData.Instance.GameLoaded = true;
 
             // Load the scene based on the player's scene position from the saved data
             Debug.Log("GameData.Instance.PlayerScenePosition: " + GameData.Instance.PlayerScenePosition);
@@ -214,7 +216,7 @@ public class PauseMenuController : MonoBehaviour
             }
 
             Vector3 cameraPosition = Camera.main.transform.position;
-            Vector3 playerPosition = playerScenePosition == 1 ? FindObjectOfType<PlayerController>().transform.position : GameData.Instance.PlayerPosition;
+            Vector3 playerPosition = playerScenePosition == 1 ? FindObjectOfType<PlayerController>().transform.position : GameData.Instance.PlayerPositionInUniverse;
             SaveData saveData = GameData.Instance.ToSaveData();
             //SaveData saveData = new SaveData(playerScenePosition, playerPosition, 0, cameraPosition);
             string json = JsonUtility.ToJson(saveData, true);

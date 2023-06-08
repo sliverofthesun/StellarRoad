@@ -1,10 +1,14 @@
 using UnityEngine;
+using PlanetDataNamespace;
 
 [System.Serializable]
 public class SaveData
 {
     public int playerScenePosition;
-    public Vector3 playerPosition;
+    public Vector3 playerPositionInUniverse;
+    public Vector3 playerPositionInStarSystem;
+    public Planet currentPlanet;
+    public Planet planet;
     public float daysPassed;
     public Vector3 cameraPosition;
 

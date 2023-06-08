@@ -47,7 +47,7 @@ public class WorldGenerator : MonoBehaviour
         GenerateStarsInChunk(Vector2Int.zero);
         OnWorldGenerated?.Invoke();
 
-        Vector3 playerPos = GameData.Instance.PlayerPosition != null ? GameData.Instance.PlayerPosition : Vector3.zero; // Using ternary operator to simplify the assignment
+        Vector3 playerPos = GameData.Instance.PlayerPositionInUniverse != null ? GameData.Instance.PlayerPositionInUniverse : Vector3.zero; // Using ternary operator to simplify the assignment
         playerController.SetPlayerPosition(playerPos);
 
         cameraController.SetCameraAbovePlayer(playerController.transform.position);
